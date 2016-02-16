@@ -37,3 +37,5 @@ mkdir packages
 mv Newtonsoft.Json packages/
 mv HidSharp packages/
 mv rabbitmq packages/
+
+date -u "+%s" > bin/BUILD
