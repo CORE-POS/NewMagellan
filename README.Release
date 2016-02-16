@@ -1,0 +1,13 @@
+This is a binary release of the NewMagellan driver
+for CORE-POS. Code for this project can be found
+at https://github.com/CORE-POS/IS4C as well as
+in the "src" directory.
+
+This release includes Newtonsoft.Json and HidSharp
+builds. Their source and licenses can be found
+in the "packages" directory.
+
+This release also includes a RabbitMQ DLL from
+https://www.rabbitmq.com/dotnet.html. Source and
+license info for this library can be found
+here: https://github.com/rabbitmq/rabbitmq-dotnet-client.
