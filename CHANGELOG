@@ -1,0 +1,9 @@
+* Build 1458230314
+  * 17Mar2016
+  * Updated SPH_Datacap_PDCX to reduce bitdepth and thus file size
+    on signature bitmaps. 
+    See: https://github.com/CORE-POS/IS4C/commit/f61a1f6faad4cf86725c4bab51d7092141e30aef
+
+* Build 1455664085
+  * 16Feb2016
+  * Initial release
