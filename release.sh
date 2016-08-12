@@ -11,6 +11,7 @@ rm ports.conf
 rm logo.bmp
 rm log.xml
 rm posdriver-sph*
+rm pos.service
 rm posd.sh
 rm posSVC.InstallState
 rm .gitignore

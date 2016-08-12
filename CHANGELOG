@@ -1,9 +1,16 @@
+* Build 1471012463
+  * 12Aug2016
+  * This release was purposely built in an Ubuntu 14.04
+    environment using Mono 3.2.8. Unless otherwise specified,
+    releases are normally built on Windows.
+
 * Build 1462562713
   * 06May2016
   * Overhauled SPH_Magellan_Scale to be more responsive
     See: https://github.com/CORE-POS/IS4C/issues/682
   * Added payment type screen with SPH_Datacap_PDCX when
     using an iSC250
+
 * Build 1458230314
   * 17Mar2016
   * Updated SPH_Datacap_PDCX to reduce bitdepth and thus file size
