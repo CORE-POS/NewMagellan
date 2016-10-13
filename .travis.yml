@@ -1,0 +1,9 @@
+sudo: false
+language: csharp
+solution: NewMagellan.sln
+install:
+    - nuget restore NewMagellan.sln
+    - nuget install NUnit.Runners -Version 3.4.1 -OutputDirectory testrunner
+script:
+    - xbuild /p:Configuration=Release NewMagellan.sln
+    - mono ./testrunner/NUnit.ConsoleRunner.3.4.1/tools/nunit3-console.exe ./Tests/bin/Release/Tests.dll
