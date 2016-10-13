@@ -32,17 +32,15 @@ using System.Collections;
 using System.Collections.Generic;
 using MsgInterface;
 using BitmapBPP;
-using DSIEMVXLib;
-using AxDSIEMVXLib;
-using DSIPDCXLib;
-using AxDSIPDCXLib;
+using AxLayer;
+using Discover;
 
 namespace SPH {
 
 public class SPH_Datacap_EMVX : SerialPortHandler 
 {
-    private DsiEMVX emv_ax_control = null;
-    private DsiPDCX pdc_ax_control = null; // can I include both?
+    private AxWrapper emv_ax_control = null;
+    private AxWrapper pdc_ax_control = null; // can I include both?
     private string device_identifier = null;
     private string com_port = "0";
     protected string server_list = "x1.mercurypay.com;x2.backuppay.com";
@@ -77,7 +75,13 @@ public class SPH_Datacap_EMVX : SerialPortHandler
     protected bool initDevice()
     {
         if (pdc_ax_control == null) {
-            pdc_ax_control = new DsiPDCX();
+            var d = new Discover.Discover();
+            try {
+                var type = d.GetType("AxLayer.PdcxWrapper");
+                pdc_ax_control = (AxWrapper)Activator.CreateInstance(type);
+            } catch (Exception) {
+                pdc_ax_control = new FakeAx();
+            }
             pdc_ax_control.ServerIPConfig(server_list, 0);
             pdc_ax_control.SetResponseTimeout(CONNECT_TIMEOUT);
             InitPDCX();
@@ -85,7 +89,13 @@ public class SPH_Datacap_EMVX : SerialPortHandler
         pdc_ax_control.CancelRequest();
 
         if (emv_ax_control == null) {
-            emv_ax_control = new DsiEMVX();
+            var d = new Discover.Discover();
+            try {
+                var type = d.GetType("AxLayer.EmvWrapper");
+                emv_ax_control = (AxWrapper)Activator.CreateInstance(type);
+            } catch (Exception) {
+                emv_ax_control = new FakeAx();
+            }
         }
         PadReset();
 

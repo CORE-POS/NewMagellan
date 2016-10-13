@@ -32,14 +32,14 @@ using System.Collections;
 using System.Collections.Generic;
 using MsgInterface;
 using BitmapBPP;
-using DSIPDCXLib;
-using AxDSIPDCXLib;
+using AxLayer;
+using Discover;
 
 namespace SPH {
 
 public class SPH_Datacap_PDCX : SerialPortHandler 
 {
-    private DsiPDCX ax_control = null;
+    private AxWrapper ax_control = null;
     private string device_identifier = null;
     private string com_port = "0";
     protected string server_list = "x1.mercurypay.com;x2.backuppay.com";
@@ -68,7 +68,13 @@ public class SPH_Datacap_PDCX : SerialPortHandler
     protected bool initDevice()
     {
         if (ax_control == null) {
-            ax_control = new DsiPDCX();
+            var d = new Discover.Discover();
+            try {
+                var type = d.GetType("AxLayer.PdcxWrapper");
+                ax_control = (AxWrapper)Activator.CreateInstance(type);
+            } catch (Exception) {
+                ax_control = new FakeAx();
+            }
             ax_control.ServerIPConfig(server_list, 0);
             ax_control.SetResponseTimeout(CONNECT_TIMEOUT);
             InitPDCX();

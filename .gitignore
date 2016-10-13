@@ -254,8 +254,8 @@ paket-files/
 ################################################################
 # End of github boilerplate visualstudio ignoring
 ################################################################
-SPH/AxDSIEMVXLib.dll
-SPH/AxDSIPDCXLib.dll
-SPH/DSIEMVXLib.dll
-SPH/DSIPDCXLib.dll
+AxLayer/AxDSIEMVXLib.dll
+AxLayer/AxDSIPDCXLib.dll
+AxLayer/DSIEMVXLib.dll
+AxLayer/DSIPDCXLib.dll
 
