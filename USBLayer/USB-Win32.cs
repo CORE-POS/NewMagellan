@@ -105,7 +105,7 @@ public class USBWrapper_Win32 : USBWrapper {
      * @param report_size [optional] report size in bytes
      * @return open read/write Stream
      */
-    public override Stream GetUSBHandle(string filename, int report_size){
+    public Stream GetUSBHandle(string filename, int report_size){
         if (filename.IndexOf("&") > 0){
             String[] parts = filename.Split(new Char[]{'&'});
             if (parts.Length != 2){
@@ -139,7 +139,7 @@ public class USBWrapper_Win32 : USBWrapper {
         return null;
     }
 
-    public override void CloseUSBHandle(){
+    public void CloseUSBHandle(){
         try {
             safe_handle.Close();
             CloseHandle(native_handle);

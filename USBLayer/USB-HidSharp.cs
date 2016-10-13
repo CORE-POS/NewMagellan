@@ -16,7 +16,7 @@ public class USBWrapper_HidSharp : USBWrapper
      * @param report_size [optional] report size in bytes
      * @return open read/write Stream
      */
-    public override Stream GetUSBHandle(string filename, int report_size)
+    public Stream GetUSBHandle(string filename, int report_size)
     { 
         HidDeviceLoader loader = new HidDeviceLoader();
         int vid = 0;
@@ -49,7 +49,7 @@ public class USBWrapper_HidSharp : USBWrapper
         return stream;
     }
 
-    public override void CloseUSBHandle()
+    public void CloseUSBHandle()
     { 
     }
 }

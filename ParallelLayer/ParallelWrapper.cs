@@ -2,7 +2,7 @@ using System.IO;
 
 namespace ParallelLayer {
 
-public class ParallelWrapper 
+public interface ParallelWrapper 
 {
 
     /**
@@ -11,12 +11,8 @@ public class ParallelWrapper
      * @param report_size [optional] report size in bytes
      * @return open write FileStream
      */
-    public virtual FileStream GetLpHandle(string filename)
-    { 
-        return null;    
-    }
-
-    public virtual void CloseLpHandle(){ }
+    FileStream GetLpHandle(string filename);
+    void CloseLpHandle();
 
 }
 

@@ -2,7 +2,7 @@
 
 namespace USBLayer
 {
-    public class USBWrapper
+    public interface USBWrapper
     {
         /**
          * Get a handle for USB device file
@@ -10,11 +10,8 @@ namespace USBLayer
          * @param report_size [optional] report size in bytes
          * @return open read/write FileStream
          */
-        public virtual Stream GetUSBHandle(string filename, int report_size)
-        {
-            return null;
-        }
+        Stream GetUSBHandle(string filename, int report_size);
 
-        public virtual void CloseUSBHandle() { }
+        void CloseUSBHandle();
     }
 }

@@ -11,12 +11,12 @@ public class USBWrapper_Posix : USBWrapper {
      * @param report_size [optional] report size in bytes
      * @return open read/write Stream
      */
-    public override Stream GetUSBHandle(string filename, int report_size){ 
+    public Stream GetUSBHandle(string filename, int report_size){ 
         if (!File.Exists(filename)) return null;
         return new FileStream(filename, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, report_size, FileOptions.Asynchronous);
     }
 
-    public override void CloseUSBHandle(){ }
+    public void CloseUSBHandle(){ }
 
 }
 

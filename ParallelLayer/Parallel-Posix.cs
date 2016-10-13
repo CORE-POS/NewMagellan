@@ -5,7 +5,7 @@ namespace ParallelLayer {
 
 public class ParallelWrapper_Posix : ParallelWrapper {
 
-    public override FileStream GetLpHandle(string filename)
+    public FileStream GetLpHandle(string filename)
     { 
         FileStream fs = null;
         try {
@@ -15,7 +15,7 @@ public class ParallelWrapper_Posix : ParallelWrapper {
         return fs;
     }
 
-    public override void CloseLpHandle(){ }
+    public void CloseLpHandle(){ }
 
 }
 

@@ -32,7 +32,7 @@ public class ParallelWrapper_Win32 : ParallelWrapper
     ); */
     [DllImport("kernel32.dll", SetLastError = true)] protected static extern int CloseHandle(IntPtr hFile);
 
-    public override FileStream GetLpHandle(string filename)
+    public FileStream GetLpHandle(string filename)
     {
         native_handle = CreateFile(filename, GENERIC_WRITE, 0, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
         if (native_handle != InvalidHandleValue) {
@@ -43,7 +43,7 @@ public class ParallelWrapper_Win32 : ParallelWrapper
         return null;
     }
 
-    public override void CloseLpHandle(){
+    public void CloseLpHandle(){
         try {
             safe_handle.Close();
             CloseHandle(native_handle);
