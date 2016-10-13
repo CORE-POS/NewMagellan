@@ -41,41 +41,57 @@ using MsgInterface;
 
 namespace SPH {
 
-public class SerialPortHandler {
-    public Thread SPH_Thread;
-    protected bool SPH_Running;
-    protected SerialPort sp;
-    protected DelegateForm parent;
-    protected string port;
-    protected int verbose_mode;
-
-    // to allow RBA_Stub
-    public SerialPortHandler() {}
-
-    public SerialPortHandler(string p){ 
-        this.SPH_Thread = new Thread(new ThreadStart(this.Read));    
-        this.SPH_Running = true;
-        this.port = p;
-        this.verbose_mode = 0;
-    }
-
-    public string Status()
+    public class SerialPortHandler
     {
-        return this.GetType().Name + ": " + this.port;
+        public Thread SPH_Thread;
+        protected bool SPH_Running;
+        protected SerialPort sp;
+        protected IPortWrapper wsp;
+        protected DelegateForm parent;
+        protected string port;
+        protected int verbose_mode;
+
+        // to allow RBA_Stub
+        public SerialPortHandler() {}
+
+        public SerialPortHandler(string p)
+        { 
+            this.SPH_Thread = new Thread(new ThreadStart(this.Read));    
+            this.SPH_Running = true;
+            this.port = p;
+            this.verbose_mode = 0;
+        }
+
+        public void SetWrapper(IPortWrapper p)
+        {
+            wsp = p;
+        }
+
+        public string Status()
+        {
+            return this.GetType().Name + ": " + this.port;
+        }
+        
+        public void SetParent(DelegateForm p)
+        {
+            parent = p;
+        }
+
+        public void SetVerbose(int v)
+        {
+            verbose_mode = v;
+        }
+
+        public virtual void Read(){ }
+        public virtual void HandleMsg(string msg){ }
+
+        public void Stop()
+        {
+            SPH_Running = false;
+            SPH_Thread.Join();
+            System.Console.WriteLine("SPH Stopped");
+        }
+
     }
-    
-    public void SetParent(DelegateForm p){ parent = p; }
-    public void SetVerbose(int v){ verbose_mode = v; }
-
-    public virtual void Read(){ }
-    public virtual void HandleMsg(string msg){ }
-
-    public void Stop(){
-        SPH_Running = false;
-        SPH_Thread.Join();
-        System.Console.WriteLine("SPH Stopped");
-    }
-
-}
 
 }

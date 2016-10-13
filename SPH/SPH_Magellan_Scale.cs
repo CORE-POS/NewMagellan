@@ -66,11 +66,10 @@ public class SPH_Magellan_Scale : SerialPortHandler
         sp.RtsEnable = true;
         sp.Handshake = Handshake.None;
         sp.ReadTimeout = 500;
+        wsp = new WrappedSerialPort(sp);
         
         scale_state = WeighState.None;
         last_weight = "0000";
-
-        sp.Open();
     }
 
     override public void HandleMsg(string msg)
@@ -97,9 +96,9 @@ public class SPH_Magellan_Scale : SerialPortHandler
         } else if (msg == "reBoot") {
             scale_state = WeighState.None;
             lock (writeLock) {
-                sp.Write("S10\r");
+                wsp.Write("S10\r");
                 Thread.Sleep(5000);
-                sp.Write("S14\r");
+                wsp.Write("S14\r");
             }
         }
     }
@@ -109,7 +108,7 @@ public class SPH_Magellan_Scale : SerialPortHandler
         lock (writeLock) {
             int count = 0;
             while(count < num) {
-                sp.Write("S334\r");
+                wsp.Write("S334\r");
                 Thread.Sleep(150);
                 count++;
             }
@@ -119,12 +118,13 @@ public class SPH_Magellan_Scale : SerialPortHandler
     private void GetStatus()
     {
         lock (writeLock) {
-            sp.Write("S14\r");
+            wsp.Write("S14\r");
         }
     }
 
     override public void Read()
     {
+        wsp.Open();
         string buffer = "";
         if (this.verbose_mode > 0) {
             System.Console.WriteLine("Reading serial data");
@@ -132,7 +132,7 @@ public class SPH_Magellan_Scale : SerialPortHandler
         GetStatus();
         while (SPH_Running) {
             try {
-                int b = sp.ReadByte();
+                int b = wsp.ReadByte();
                 if (b == 13) {
                     if (this.verbose_mode > 0) {
                         System.Console.WriteLine("RECV FROM SCALE: "+buffer);
