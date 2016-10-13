@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{737AFA7E-E4DA-4DE2-8948-9AD1AC7CD1C5}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SPH</RootNamespace>
+    <AssemblyName>SPH</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <NoWarn>1607</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <NoWarn>1607</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <NoWarn>1607</NoWarn>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <NoWarn>1607</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="DSIPDCXLib.dll" Condition=" Exists('DSIPDCXLib.dll') And Exists('AxDSIPDCXLib.dll') " />
+    <Reference Include="AxDSIPDCXLib.dll" Condition=" Exists('DSIPDCXLib.dll') And Exists('AxDSIPDCXLib.dll') " />
+    <Reference Include="DSIEMVXLib.dll" Condition=" Exists('DSIEMVXLib.dll') And Exists('AxDSIEMVXLib.dll') " />
+    <Reference Include="AxDSIEMVXLib.dll" Condition=" Exists('DSIEMVXLib.dll') And Exists('AxDSIEMVXLib.dll') " />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RBA_Stub.cs" />
+    <Compile Include="SerialPortHandler.cs" />
+    <Compile Include="SPH_Datacap_EMVX.cs" Condition=" Exists('DSIPDCXLib.dll') And Exists('AxDSIPDCXLib.dll') And Exists('DSIEMVXLib.dll') AND Exists('AxDSIEMVXLib.dll') " />
+    <Compile Include="SPH_Datacap_IPTran.cs" />
+    <Compile Include="SPH_Datacap_PDCX.cs" Condition=" Exists('DSIPDCXLib.dll') And Exists('AxDSIPDCXLib.dll') " />
+    <Compile Include="SPH_IngenicoRBA_Common.cs" />
+    <Compile Include="SPH_IngenicoRBA_IP.cs" />
+    <Compile Include="SPH_IngenicoRBA_RS232.cs" />
+    <Compile Include="SPH_IngenicoRBA_USB.cs" />
+    <Compile Include="SPH_Magellan_Classic.cs" />
+    <Compile Include="SPH_Magellan_Locking.cs" />
+    <Compile Include="SPH_Magellan_Scale.cs" />
+    <Compile Include="SPH_NCR_Scale.cs" />
+    <Compile Include="SPH_Parallel_Writer.cs" />
+    <Compile Include="SPH_SignAndPay_Auto.cs" />
+    <Compile Include="SPH_SignAndPay_Native.cs" />
+    <Compile Include="SPH_SignAndPay_USB.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Bitmap\BitmapBPP.csproj">
+      <Project>{eeca9b14-5bbc-482f-a6cb-cd81c765c1cb}</Project>
+      <Name>BitmapBPP</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MsgInterface\MsgInterface.csproj">
+      <Project>{a9db10d0-da70-4835-b5f9-b91b5fb1d530}</Project>
+      <Name>MsgInterface</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ParallelLayer\ParallelLayer.csproj">
+      <Project>{7e5324f2-d87d-41fa-991c-f4d605cafa01}</Project>
+      <Name>ParallelLayer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\USBLayer\USBLayer.csproj">
+      <Project>{d52c0d6a-a277-40a9-b91c-ed90917ce49c}</Project>
+      <Name>USBLayer</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

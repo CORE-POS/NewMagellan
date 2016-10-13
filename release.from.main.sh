@@ -1,4 +1,5 @@
 #!/bin/sh
+# Assemble a release in "bin" from CORE-POS/IS4C version
 
 # do not have permission to distribute these
 rm AxDSI*.dll
