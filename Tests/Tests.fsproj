@@ -51,11 +51,13 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="FakePort.fs" />
     <Compile Include="Bitmap.fs" />
     <Content Include="packages.config" />
     <Content Include="App.config" />
     <Compile Include="Discover.fs" />
     <Compile Include="UDP.fs" />
+    <Compile Include="Magellan.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">
@@ -79,6 +81,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.ServiceProcess" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bitmap\BitmapBPP.csproj">
@@ -94,6 +97,11 @@
     <ProjectReference Include="..\MsgInterface\MsgInterface.csproj">
       <Name>MsgInterface</Name>
       <Project>{a9db10d0-da70-4835-b5f9-b91b5fb1d530}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SPH\SPH.csproj">
+      <Name>SPH</Name>
+      <Project>{737afa7e-e4da-4de2-8948-9ad1ac7cd1c5}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\UDPMsgBox\UDPMsgBox.csproj">
