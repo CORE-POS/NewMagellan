@@ -79,6 +79,7 @@
     <Compile Include="Discover.fs" />
     <Compile Include="UDP.fs" />
     <Compile Include="Magellan.fs" />
+    <Compile Include="EMV.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">
@@ -101,10 +102,16 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.ServiceProcess" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AxLayer\AxLayer.csproj">
+      <Name>AxLayer</Name>
+      <Project>{a280b605-c26e-49da-a5a9-806b9ed96704}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Bitmap\BitmapBPP.csproj">
       <Name>BitmapBPP</Name>
       <Project>{eeca9b14-5bbc-482f-a6cb-cd81c765c1cb}</Project>
