@@ -12,7 +12,7 @@ module EMV =
     let ``Send Transactions`` () =
         let emv = new SPH_Datacap_EMVX("VX805XPI:COM1")
         let ax = new FakeAx()
-        emv.SPH_Thread.Start()
+        emv.SPHThread.Start()
         while emv.IsListening()=false do
             System.Threading.Thread.Sleep(50)
         emv.SetControls(ax, ax)

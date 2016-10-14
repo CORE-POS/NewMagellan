@@ -62,10 +62,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="USB-HidSharp.cs" />
-    <Compile Include="USB-Posix.cs" />
-    <Compile Include="USB-Win32.cs" />
-    <Compile Include="USBWrapper.cs" />
+    <Compile Include="USBWrapper_HidSharp.cs" />
+    <Compile Include="USBWrapper_Posix.cs" />
+    <Compile Include="USBWrapper_Win32.cs" />
+    <Compile Include="IUSBWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

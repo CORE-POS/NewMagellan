@@ -34,7 +34,7 @@ public class SPH_SignAndPay_USB : SerialPortHandler {
 
     protected static String MAGELLAN_OUTPUT_DIR = "ss-output/";
 
-    protected USBWrapper usb_port;
+    protected IUSBWrapper usb_port;
     protected bool read_continues;
     protected byte[] long_buffer;
     protected int long_length;
@@ -745,7 +745,7 @@ public class SPH_SignAndPay_USB : SerialPortHandler {
       ReadCallback calls build up one after the other.
     */
     protected void MonoRead(){
-        while(SPH_Running){
+        while(sphRunning){
             byte[] buf = new byte[usb_report_size];
             try {
                 usb_fs.BeginRead(buf, 0, usb_report_size, new AsyncCallback(MonoReadCallback), buf);

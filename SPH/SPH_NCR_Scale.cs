@@ -124,7 +124,7 @@ public class SPH_NCR_Scale : SerialPortHandler
             System.Console.WriteLine("Reading serial data");
         }
         GetStatus();
-        while (SPH_Running) {
+        while (this.sphRunning) {
             try {
                 int b = sp.ReadByte();
                 if (b == ETX) {

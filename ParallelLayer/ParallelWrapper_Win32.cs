@@ -34,12 +34,12 @@ namespace ParallelLayer
         /// <summary>
         /// Integer pointer to null
         /// </summary>
-        private static IntPtr nullHandle = IntPtr.Zero;
+        private static IntPtr NullHandle = IntPtr.Zero;
 
         /// <summary>
         /// Integer pointer to invalid handle
         /// </summary>
-        private static IntPtr invalidHandleValue = new IntPtr(-1);
+        private static IntPtr InvalidHandleValue = new IntPtr(-1);
 
         /// <summary>
         /// A native file handle
@@ -59,7 +59,7 @@ namespace ParallelLayer
         public FileStream GetLpHandle(string filename)
         {
             this.nativeHandle = CreateFile(filename, GENERIC_WRITE, 0, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
-            if (this.nativeHandle != invalidHandleValue)
+            if (this.nativeHandle != InvalidHandleValue)
             {
                 this.safeHandle = new SafeFileHandle(this.nativeHandle, true);
                 return new FileStream(this.safeHandle, FileAccess.Write);

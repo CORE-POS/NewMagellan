@@ -55,7 +55,7 @@ public class SPH_IngenicoRBA_USB : SPH_IngenicoRBA_Common
      * in that packet.
      */
 
-    private USBWrapper usb_port;
+    private IUSBWrapper usb_port;
     private bool read_continues;
     private System.Collections.Generic.List<byte> long_buffer;
     private Stream usb_fs;

@@ -58,7 +58,7 @@ public class SPH_Parallel_Writer : SerialPortHandler {
             System.Console.WriteLine("Listening for print connections");
         }
 
-        while(SPH_Running) {
+        while(this.sphRunning) {
             server.BeginAcceptTcpClient(new AsyncCallback(HandleClient), server);
 
             // Wait for client connection

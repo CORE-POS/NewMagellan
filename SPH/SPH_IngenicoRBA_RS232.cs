@@ -161,7 +161,7 @@ public class SPH_IngenicoRBA_RS232 : SPH_IngenicoRBA_Common
         HandleMsg("termReset");
 
         ArrayList bytes = new ArrayList();
-        while (SPH_Running) {
+        while (this.sphRunning) {
             try {
                 int b = sp.ReadByte();
                 if (b == 0x06) {

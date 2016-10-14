@@ -1,3 +1,8 @@
+//-------------------------------------------------------------
+// <copyright file="SerialPortHandler.cs" company="Whole Foods Co-op">
+//  Released under GPL2 license
+// </copyright>
+//-------------------------------------------------------------
 /*******************************************************************************
 
     Copyright 2009 Whole Foods Co-op
@@ -34,64 +39,140 @@
  * load event and provides the Url that was just loaded.
  *
 *************************************************************/
-using System;
-using System.IO.Ports;
-using System.Threading;
-using MsgInterface;
 
-namespace SPH {
+namespace SPH
+{
+    using System.IO.Ports;
+    using System.Threading;
+    using MsgInterface;
 
+    /// <summary>
+    /// Base class for serial port handlers
+    /// </summary>
     public class SerialPortHandler
     {
-        public Thread SPH_Thread;
-        protected bool SPH_Running;
+        /// <summary>
+        /// Thread to run handler in
+        /// </summary>
+        public Thread SPHThread;
+
+        /// <summary>
+        /// Handler is running
+        /// </summary>
+        protected bool sphRunning;
+
+        /// <summary>
+        /// A serial port
+        /// </summary>
         protected SerialPort sp;
+
+        /// <summary>
+        /// Wrapped serial port
+        /// </summary>
         protected IPortWrapper wsp;
+
+        /// <summary>
+        /// Parent message handler
+        /// </summary>
         protected IDelegateForm parent;
+
+        /// <summary>
+        /// Port number
+        /// </summary>
         protected string port;
+
+        /// <summary>
+        /// Output level setting
+        /// </summary>
         protected int verbose_mode;
 
-        // to allow RBA_Stub
-        public SerialPortHandler() {}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SerialPortHandler"/> class.
+        /// Required for RBA_Stub.
+        /// </summary>
+        public SerialPortHandler()
+        {
+        }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SerialPortHandler"/> class.
+        /// </summary>
+        /// <param name="p">port identifier</param>
         public SerialPortHandler(string p)
         { 
-            this.SPH_Thread = new Thread(new ThreadStart(this.Read));    
-            this.SPH_Running = true;
+            this.SPHThread = new Thread(new ThreadStart(this.Read));    
+            this.sphRunning = true;
             this.port = p;
             this.verbose_mode = 0;
         }
 
+        /// <summary>
+        /// Setter for port wrapper
+        /// </summary>
+        /// <param name="p">new wrapper</param>
         public void SetWrapper(IPortWrapper p)
         {
-            wsp = p;
+            this.wsp = p;
         }
 
+        /// <summary>
+        /// Get device status
+        /// </summary>
+        /// <returns>status string</returns>
         public string Status()
         {
             return this.GetType().Name + ": " + this.port;
         }
         
+        /// <summary>
+        /// Setter for parent
+        /// </summary>
+        /// <param name="p">new parent</param>
         public void SetParent(IDelegateForm p)
         {
-            parent = p;
+            this.parent = p;
         }
 
+        /// <summary>
+        /// Setter for output level
+        /// </summary>
+        /// <param name="v">new output level</param>
         public void SetVerbose(int v)
         {
-            verbose_mode = v;
+            this.verbose_mode = v;
         }
 
-        public virtual void Read(){ }
-        public virtual void HandleMsg(string msg){ }
+        /// <summary>
+        /// Main method running in the device handler thread
+        /// </summary>
+        public virtual void Read()
+        {
+        }
 
+        /// <summary>
+        /// Handler for incoming messages
+        /// </summary>
+        /// <param name="msg">the message</param>
+        public virtual void HandleMsg(string msg)
+        {
+        }
+
+        /// <summary>
+        /// Stop running device thread
+        /// </summary>
         public void Stop()
         {
-            SPH_Running = false;
-            SPH_Thread.Join();
+            this.sphRunning = false;
+            this.SPHThread.Join();
             System.Console.WriteLine("SPH Stopped");
         }
 
+        protected void LogOrNot(string msg, int level = 1)
+        {
+            if (this.verbose_mode >= level)
+            {
+                System.Console.WriteLine(msg);
+            }
+        }
     }
-
 }

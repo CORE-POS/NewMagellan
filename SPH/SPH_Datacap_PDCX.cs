@@ -104,7 +104,7 @@ public class SPH_Datacap_PDCX : SerialPortHandler
         TcpListener http = new TcpListener(IPAddress.Loopback, LISTEN_PORT);
         http.Start();
         byte[] buffer = new byte[10];
-        while (SPH_Running) {
+        while (this.sphRunning) {
             try {
                 using (TcpClient client = http.AcceptTcpClient()) {
                     client.ReceiveTimeout = 100;

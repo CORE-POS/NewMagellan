@@ -143,7 +143,7 @@ namespace SPH
             http = new TcpListener(IPAddress.Loopback, LISTEN_PORT);
             http.Start();
             byte[] buffer = new byte[10];
-            while (SPH_Running)
+            while (sphRunning)
             {
                 try
                 {
@@ -601,11 +601,11 @@ namespace SPH
 
         new public void Stop()
         {
-            SPH_Running = false;
+            sphRunning = false;
             if (http != null) {
                 http.Stop();
             }
-            SPH_Thread.Join();
+            SPHThread.Join();
             System.Console.WriteLine("SPH Stopped");
         }
 

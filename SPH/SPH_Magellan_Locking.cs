@@ -112,7 +112,7 @@ public class SPH_Magellan_Locking : SerialPortHandler {
         if (this.verbose_mode > 0)
             System.Console.WriteLine("Reading serial data");
         safeWrite("S14\r");
-        while (SPH_Running) {
+        while (this.sphRunning) {
             try {
                 int b = sp.ReadByte();
                 if (b == 13) {

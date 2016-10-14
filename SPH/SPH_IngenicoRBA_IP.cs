@@ -36,7 +36,7 @@ public class SPH_IngenicoRBA_IP : SPH_IngenicoRBA_Common {
 
     public SPH_IngenicoRBA_IP(string p) : base(p)
     { 
-        this.SPH_Running = true;
+        this.sphRunning = true;
         this.verbose_mode = 0;
         this.device = new TcpClient();
         this.device_host = p;
@@ -71,7 +71,7 @@ public class SPH_IngenicoRBA_IP : SPH_IngenicoRBA_Common {
         byte[] buffer = new byte[512];
         int buffer_position = 0;
         int bytes_read = 0; 
-        while (SPH_Running) {
+        while (sphRunning) {
             try {
                 bytes_read = stream.Read(buffer, buffer_position, buffer.Length);
                 if (bytes_read > 0) {

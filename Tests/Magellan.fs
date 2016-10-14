@@ -32,7 +32,7 @@ module Magellan =
         let sph = getInstance()
         let data = FakePort.charsToInts ['S';'0';'8';'E';'1';'2';'3';'4';'5';'6';'\r']
         wsp.buffer <- data
-        sph.SPH_Thread.Start()
+        sph.SPHThread.Start()
         while wsp.buffer.Length > 0 do
             System.Threading.Thread.Sleep(50)
         sph.Stop()
@@ -43,7 +43,7 @@ module Magellan =
         let sph = getInstance()
         let data = FakePort.charsToInts ['S';'1';'4';'4';'W';'X';'Y';'Z';'\r']
         wsp.buffer <- data
-        sph.SPH_Thread.Start()
+        sph.SPHThread.Start()
         while wsp.buffer.Length > 0 do
             System.Threading.Thread.Sleep(50)
         sph.Stop()

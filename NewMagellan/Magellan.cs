@@ -401,7 +401,7 @@ public class Magellan : IDelegateForm
     private void MonitorSerialPorts()
     {
         var valid = this.sph.Where(s => s != null);
-        valid.ToList().ForEach(s => { s.SPH_Thread.Start(); });
+        valid.ToList().ForEach(s => { s.SPHThread.Start(); });
     }
 
     /// <summary>

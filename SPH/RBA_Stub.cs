@@ -90,18 +90,18 @@ public class RBA_Stub : SPH_IngenicoRBA_Common
     {
         initPort();
         sp.Open();
-        SPH_Running = true;
-        this.SPH_Thread = new Thread(new ThreadStart(this.Read));    
-        SPH_Thread.Start();
+        this.sphRunning = true;
+        this.SPHThread = new Thread(new ThreadStart(this.Read));    
+        this.SPHThread.Start();
     }
 
     public void stubStop()
     {
-        SPH_Running = false;
+        this.sphRunning = false;
         try {
             sp.Close();
         } catch (Exception) { }
-        SPH_Thread.Join();
+        this.SPHThread.Join();
     }
 
     public void addScreenMessage(string message)
@@ -197,7 +197,7 @@ public class RBA_Stub : SPH_IngenicoRBA_Common
         int ackCount = 0;
 
         ArrayList bytes = new ArrayList();
-        while (SPH_Running) {
+        while (sphRunning) {
             try {
                 int b = sp.ReadByte();
                 if (b == 0x06) {
