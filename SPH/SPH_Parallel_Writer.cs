@@ -33,7 +33,7 @@ namespace SPH {
 
 public class SPH_Parallel_Writer : SerialPortHandler {
 
-    private ParallelWrapper lp_port;
+    private IParallelWrapper lp_port;
     private FileStream lp_fs;
 
     private ManualResetEvent client_connect_signal;

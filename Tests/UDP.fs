@@ -13,7 +13,7 @@ module UDP =
         let u = new UDPMsgBox.UDPMsgBox(9450)
         let f = FakePort.FakeDelegate()
         u.SetParent(f)
-        u.My_Thread.Start()
+        u.MyThread.Start()
         while not (u.IsListening()) do
             System.Threading.Thread.Sleep(50)
         let client = new UdpClient()
