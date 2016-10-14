@@ -1,4 +1,9 @@
-/*******************************************************************************
+//-------------------------------------------------------------
+// <copyright file="Magellan.cs" company="Whole Foods Co-op">
+//  Released under GPL2 license
+// </copyright>
+//-------------------------------------------------------------
+/********************************************************************************
 
     Copyright 2009 Whole Foods Co-op
 
@@ -29,153 +34,214 @@
  * blocks indefinitely. Use timeouts in polling reads.
 *************************************************************/
 using System;
-using System.Threading;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
-
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
-using RabbitMQ.Client;
+using System.Threading;
 
 using MsgInterface;
-using UDPMsgBox;
+using Newtonsoft.Json.Linq;
+using RabbitMQ.Client;
 using SPH;
-using Discover;
 
-public class Magellan : DelegateForm 
+/// <summary>
+/// Main class for the CLI app
+/// </summary>
+public class Magellan : IDelegateForm 
 {
+    /// <summary>
+    /// All serial port handler modules
+    /// </summary>
     private List<SerialPortHandler> sph;
+
+    /// <summary>
+    /// UDP message inbox
+    /// </summary>
     private UDPMsgBox.UDPMsgBox u;
-    private Object msgLock = new Object();
+
+    /// <summary>
+    /// Concurrency lock for sending messages
+    /// </summary>
+    private object msgLock = new object();
+
+    /// <summary>
+    /// Counter for sent messages
+    /// </summary>
     private ushort msgCount = 0;
 
-    private bool mq_enabled = false;
-    private bool full_udp = false;
+    /// <summary>
+    /// RabbitMQ transmission is enabled
+    /// </summary>
+    private bool mqEnabled = false;
 
-    private bool mq_available = true;
-    ConnectionFactory rabbit_factory;
-    IConnection rabbit_con;
-    IModel rabbit_channel;
+    /// <summary>
+    /// Bi-directional UDP is enabled
+    /// </summary>
+    private bool fullUdp = false;
 
-    // read deisred modules from config file
+    /// <summary>
+    /// RabbitMQ is up and running
+    /// </summary>
+    private bool mqAvailable = true;
+
+    /// <summary>
+    /// UDP message handler
+    /// </summary>
+    private UdpClient udpClient = null;
+
+    /// <summary>
+    /// RabbitMQ connection factory
+    /// </summary>
+    private ConnectionFactory rabbitFactory;
+
+    /// <summary>
+    /// Connection to RabbitMQ
+    /// </summary>
+    private IConnection rabbitCon;
+
+    /// <summary>
+    /// RabbitMQ channel
+    /// </summary>
+    private IModel rabbitChannel;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Magellan"/> class.
+    /// </summary>
+    /// <param name="verbosity">output level</param>
     public Magellan(int verbosity)
     {
         var d = new Discover.Discover();
         var modules = d.GetSubClasses("SPH.SerialPortHandler");
 
-        List<MagellanConfigPair> conf = ReadConfig();
-        sph = new List<SerialPortHandler>();
-        foreach (var pair in conf) {
-            try {
-                if (modules.Any(m => m.Name == pair.module)) {
-                    var type = d.GetType("SPH." + pair.module);
-                    Console.WriteLine(pair.module + ":" + pair.port);
-                    SerialPortHandler s = (SerialPortHandler)Activator.CreateInstance(type, new Object[]{ pair.port });
+        List<MagellanConfigPair> conf = this.ReadConfig();
+        this.sph = new List<SerialPortHandler>();
+        foreach (var pair in conf)
+        {
+            try
+            {
+                if (modules.Any(m => m.Name == pair.Module))
+                {
+                    var type = d.GetType("SPH." + pair.Module);
+                    Console.WriteLine(pair.Module + ":" + pair.Port);
+                    SerialPortHandler s = (SerialPortHandler)Activator.CreateInstance(type, new object[] { pair.Port });
                     s.SetParent(this);
                     s.SetVerbose(verbosity);
-                    sph.Add(s);
-                } else {
-                    throw new Exception("unknown module: " + pair.module);
+                    this.sph.Add(s);
                 }
-            } catch (Exception ex) {
+                else
+                {
+                    throw new Exception("unknown module: " + pair.Module);
+                }
+            }
+            catch (Exception ex)
+            {
                 Console.WriteLine(ex);
-                Console.WriteLine("Warning: could not initialize "+pair.port);
+                Console.WriteLine("Warning: could not initialize " + pair.Port);
                 Console.WriteLine("Ensure the device is connected and you have permission to access it.");
             }
         }
-        MonitorSerialPorts();
-        UdpListen();
 
-        factorRabbits();
+        this.MonitorSerialPorts();
+        this.UdpListen();
+        this.FactorRabbits();
     }
 
-    // alternate constructor for specifying
-    // desired modules at compile-time
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Magellan"/> class.
+    /// Alternate constructor that specifies modules
+    /// at compile-time
+    /// </summary>
+    /// <param name="args">serial port handlers</param>
     public Magellan(SerialPortHandler[] args)
     {
         this.sph = new List<SerialPortHandler>(args);
-        MonitorSerialPorts();
-        UdpListen();
+        this.MonitorSerialPorts();
+        this.UdpListen();
     }
 
-    private void factorRabbits()
+    /// <summary>
+    /// Entry point method
+    /// </summary>
+    /// <param name="args">CLI arguments</param>
+    public static void Main(string[] args)
     {
-        try {
-            rabbit_factory = new ConnectionFactory();
-            rabbit_factory.HostName = "localhost";
-            rabbit_con = rabbit_factory.CreateConnection();
-            rabbit_channel = rabbit_con.CreateModel();
-            rabbit_channel.QueueDeclare("core-pos", false, false, false, null);
-        } catch (Exception) {
-            mq_available = false;
+        int verbosity = 0;
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i] == "-v")
+            {
+                verbosity = 1;
+                if (i + 1 < args.Length)
+                {
+                    try
+                    {
+                        verbosity = int.Parse(args[i + 1]);
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
         }
+
+        new Magellan(verbosity);
+        Thread.Sleep(Timeout.Infinite);
     }
 
-    private UdpClient udp_client = null;
-    private UdpClient getClient()
-    {
-        if (udp_client == null) {
-            udp_client = new UdpClient();
-            udp_client.Connect(System.Net.IPAddress.Parse("127.0.0.1"), 9451);
-        }
-
-        return udp_client;
-    }
-
-    private void UdpListen()
-    {
-        u = new UDPMsgBox.UDPMsgBox(9450);
-        u.SetParent(this);
-        u.My_Thread.Start();
-    }
-
-    private void MonitorSerialPorts()
-    {
-        var valid = sph.Where(s => s != null);
-        valid.ToList().ForEach(s => { s.SPH_Thread.Start(); });
-    }
-
+    /// <summary>
+    /// Handle incoming messages
+    /// </summary>
+    /// <param name="msg">the message</param>
     public void MsgRecv(string msg)
     {
-        if (msg == "exit") {
+        if (msg == "exit")
+        {
             this.ShutDown();
-        } else if (msg == "full_udp") {
-            full_udp = true;
-        } else if (msg == "mq_up" && mq_available) {
-            mq_enabled = true;
-        } else if (msg == "mq_down") {
-            mq_enabled = false;
-        } else if (msg == "status") {
-            byte[] body = System.Text.Encoding.ASCII.GetBytes(Status());
-            getClient().Send(body, body.Length); 
-        } else {
-            sph.ForEach(s => { s.HandleMsg(msg); });
+        }
+        else if (msg == "fullUdp")
+        {
+            this.fullUdp = true;
+        }
+        else if (msg == "mq_up" && this.mqAvailable)
+        {
+            this.mqEnabled = true;
+        }
+        else if (msg == "mq_down")
+        {
+            this.mqEnabled = false;
+        }
+        else if (msg == "status")
+        {
+            byte[] body = System.Text.Encoding.ASCII.GetBytes(this.Status());
+            this.GetClient().Send(body, body.Length); 
+        }
+        else
+        {
+            this.sph.ForEach(s => { s.HandleMsg(msg); });
         }
     }
 
-    private string Status()
-    {
-        string ret = "";
-        foreach (var s in sph) {
-            ret += s.Status() + "\n";
-        }
-
-        return ret;
-    }
-
+    /// <summary>
+    /// Send an outgoing message
+    /// </summary>
+    /// <param name="msg">the message</param>
     public void MsgSend(string msg)
     {
-        if (full_udp) {
+        if (this.fullUdp)
+        {
             byte[] body = System.Text.Encoding.UTF8.GetBytes(msg);
-            getClient().Send(body, body.Length); 
-        } else if (mq_available && mq_enabled) {
+            this.GetClient().Send(body, body.Length); 
+        }
+        else if (this.mqAvailable && this.mqEnabled)
+        {
             byte[] body = System.Text.Encoding.UTF8.GetBytes(msg);
-            rabbit_channel.BasicPublish("", "core-pos", null, body);
-        } else {
-            lock (msgLock) {
+            this.rabbitChannel.BasicPublish(string.Empty, "core-pos", null, body);
+        }
+        else
+        {
+            lock (this.msgLock)
+            {
                 string filename = System.Guid.NewGuid().ToString();
                 string my_location = AppDomain.CurrentDomain.BaseDirectory;
                 char sep = Path.DirectorySeparatorChar;
@@ -185,67 +251,89 @@ public class Magellan : DelegateForm
                   there shouldn't be sequence issues. But real world disk I/O
                   may be trivial with a serial message source
                 */
-                if (msgCount % 1 == 0 && Directory.GetFiles(my_location+sep+"ss-output/").Length == 0) {
-                    msgCount = 0;
+                if (this.msgCount % 1 == 0 && Directory.GetFiles(my_location + sep + "ss-output/").Length == 0)
+                {
+                    this.msgCount = 0;
                 }
-                filename = msgCount.ToString("D5") + filename;
-                msgCount++;
 
-                TextWriter sw = new StreamWriter(my_location + sep + "ss-output/" +sep+"tmp"+sep+filename);
+                filename = this.msgCount.ToString("D5") + filename;
+                this.msgCount++;
+
+                TextWriter sw = new StreamWriter(my_location + sep + "ss-output/" + sep + "tmp" + sep + filename);
                 sw = TextWriter.Synchronized(sw);
                 sw.WriteLine(msg);
                 sw.Close();
-                File.Move(my_location+sep+"ss-output/" +sep+"tmp"+sep+filename,
-                      my_location+sep+"ss-output/" +sep+filename);
+                File.Move(
+                    my_location + sep + "ss-output/" + sep + "tmp" + sep + filename,
+                    my_location + sep + "ss-output/" + sep + filename);
             }
         }
     }
 
+    /// <summary>
+    /// Stop all the driver threads
+    /// </summary>
     public void ShutDown()
     {
-        try {
-            sph.ForEach(s => { s.Stop(); });
-            u.Stop();
+        try
+        {
+            this.sph.ForEach(s => { s.Stop(); });
+            this.u.Stop();
         }
-        catch(Exception ex) {
+        catch (Exception ex)
+        {
             Console.WriteLine(ex);
         }
     }
 
+    /// <summary>
+    /// Read JSON configuration
+    /// </summary>
+    /// <returns>configuration values</returns>
     private List<MagellanConfigPair> JsonConfig()
     {
         string my_location = AppDomain.CurrentDomain.BaseDirectory;
         char sep = Path.DirectorySeparatorChar;
         string ini_file = my_location + sep + ".." + sep + ".." + sep + ".." + sep + "ini.json";
         List<MagellanConfigPair> conf = new List<MagellanConfigPair>();
-        if (!File.Exists(ini_file)) {
+        if (!File.Exists(ini_file))
+        {
             return conf;
         }
 
-        try {
+        try
+        {
             string ini_json = File.ReadAllText(ini_file);
             JObject o = JObject.Parse(ini_json);
+
             // filter list to valid entries
-            var valid = o["NewMagellanPorts"].Where(p=> p["port"] != null && p["module"] != null);
+            var valid = o["NewMagellanPorts"].Where(p => p["port"] != null && p["module"] != null);
+
             // map entries to ConfigPair objects
-            var pairs = valid.Select(p => new MagellanConfigPair(){port=(string)p["port"], module=(string)p["module"]});
+            var pairs = valid.Select(p => new MagellanConfigPair() { Port = (string)p["port"], Module = (string)p["module"] });
             conf = pairs.ToList();
 
             // print errors for invalid entries
-            o["NewMagellanPorts"].Where(p => p["port"] == null).ToList().ForEach(p => {
+            o["NewMagellanPorts"].Where(p => p["port"] == null).ToList().ForEach(p => 
+            {
                 Console.WriteLine("Missing the \"port\" setting. JSON:");
                 Console.WriteLine(p);
             });
 
             // print errors for invalid entries
-            o["NewMagellanPorts"].Where(p => p["module"] == null).ToList().ForEach(p => {
+            o["NewMagellanPorts"].Where(p => p["module"] == null).ToList().ForEach(p => 
+            {
                 Console.WriteLine("Missing the \"module\" setting. JSON:");
                 Console.WriteLine(p);
             });
-        } catch (NullReferenceException) {
+        }
+        catch (NullReferenceException)
+        {
             // probably means no NewMagellanPorts key in ini.json
             // not a fatal problem
-        } catch (Exception ex) {
+        }
+        catch (Exception ex)
+        {
             // unexpected exception
             Console.WriteLine(ex);
         }
@@ -253,14 +341,19 @@ public class Magellan : DelegateForm
         return conf;
     }
 
+    /// <summary>
+    /// Read old-style <c>ports.conf</c>
+    /// </summary>
+    /// <returns>configuration values</returns>
     private List<MagellanConfigPair> ReadConfig()
     {
         /**
          * Look for settings in ini.json if it exists
          * and the library DLL exists
          */
-        List<MagellanConfigPair> json_ports = JsonConfig();
-        if (json_ports.Count > 0) {
+        List<MagellanConfigPair> json_ports = this.JsonConfig();
+        if (json_ports.Count > 0)
+        {
             return json_ports;
         }
 
@@ -270,20 +363,30 @@ public class Magellan : DelegateForm
         List<MagellanConfigPair> conf = new List<MagellanConfigPair>();
         HashSet<string> hs = new HashSet<string>();
         string line;
-        while( (line = fp.ReadLine()) != null) {
+        while ((line = fp.ReadLine()) != null)
+        {
             line = line.TrimStart(null);
-            if (line == "" || line[0] == '#') continue;
+            if (line == string.Empty || line[0] == '#')
+            {
+                continue;
+            }
+
             string[] pieces = line.Split(null);
-            if (pieces.Length != 2) {
-                Console.WriteLine("Warning: malformed port.conf line: "+line);
+            if (pieces.Length != 2)
+            {
+                Console.WriteLine("Warning: malformed port.conf line: " + line);
                 Console.WriteLine("Format: <port_string> <handler_class_name>");
-            } else if (hs.Contains(pieces[0])) {
+            }
+            else if (hs.Contains(pieces[0]))
+            {
                 Console.WriteLine("Warning: device already has a module attached.");
-                Console.WriteLine("Line will be ignored: "+line);
-            } else {
-	        var pair = new MagellanConfigPair();
-                pair.port = pieces[0];
-                pair.module = pieces[1];
+                Console.WriteLine("Line will be ignored: " + line);
+            }
+            else
+            {
+                var pair = new MagellanConfigPair();
+                pair.Port = pieces[0];
+                pair.Module = pieces[1];
                 conf.Add(pair);
                 hs.Add(pieces[0]);
             }
@@ -292,28 +395,87 @@ public class Magellan : DelegateForm
         return conf;
     }
 
-    static public void Main(string[] args)
+    /// <summary>
+    /// Start all the serial port handler threads
+    /// </summary>
+    private void MonitorSerialPorts()
     {
-        int verbosity = 0;
-        for (int i=0;i<args.Length;i++){
-            if (args[i] == "-v"){
-                verbosity = 1;    
-                if (i+1 < args.Length){
-                    try { verbosity = Int32.Parse(args[i+1]); }
-                    catch{}
-                }
-            }
+        var valid = this.sph.Where(s => s != null);
+        valid.ToList().ForEach(s => { s.SPH_Thread.Start(); });
+    }
+
+    /// <summary>
+    /// Get current serial port status
+    /// </summary>
+    /// <returns>Status information</returns>
+    private string Status()
+    {
+        string ret = string.Empty;
+        foreach (var s in this.sph)
+        {
+            ret += s.Status() + "\n";
         }
-        new Magellan(verbosity);
-        Thread.Sleep(Timeout.Infinite);
+
+        return ret;
+    }
+
+    /// <summary>
+    /// Listen for messages over UDP
+    /// </summary>
+    private void UdpListen()
+    {
+        this.u = new UDPMsgBox.UDPMsgBox(9450);
+        this.u.SetParent(this);
+        this.u.MyThread.Start();
+    }
+
+    /// <summary>
+    /// Initialize UDP client
+    /// </summary>
+    /// <returns>the client</returns>
+    private UdpClient GetClient()
+    {
+        if (this.udpClient == null)
+        {
+            this.udpClient = new UdpClient();
+            this.udpClient.Connect(System.Net.IPAddress.Parse("127.0.0.1"), 9451);
+        }
+
+        return this.udpClient;
+    }
+
+    /// <summary>
+    /// Connect to RabbitMQ
+    /// </summary>
+    private void FactorRabbits()
+    {
+        try
+        {
+            this.rabbitFactory = new ConnectionFactory();
+            this.rabbitFactory.HostName = "localhost";
+            this.rabbitCon = this.rabbitFactory.CreateConnection();
+            this.rabbitChannel = this.rabbitCon.CreateModel();
+            this.rabbitChannel.QueueDeclare("core-pos", false, false, false, null);
+        }
+        catch (Exception)
+        {
+            this.mqAvailable = false;
+        }
     }
 }
 
-/**
- Helper class representing a config setting
-*/
+/// <summary>
+/// Simple class to hold config key/value pairs
+/// </summary>
 public class MagellanConfigPair
 {
-    public string port { get; set; }
-    public string module { get; set; }
+    /// <summary>
+    /// Gets or sets port device file name
+    /// </summary>
+    public string Port { get; set; }
+
+    /// <summary>
+    /// Gets or sets serial port handler module
+    /// </summary>
+    public string Module { get; set; }
 }

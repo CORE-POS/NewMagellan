@@ -34,7 +34,7 @@ module FakePort =
     type FakeDelegate() =
         member val lastMsg = "" with get,set
         member val lastSend = "" with get,set
-        interface DelegateForm with
+        interface IDelegateForm with
             member this.MsgSend(msg:string) =
                 this.lastSend <- msg
                 ()

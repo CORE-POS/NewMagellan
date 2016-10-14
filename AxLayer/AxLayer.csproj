@@ -62,7 +62,7 @@
     <Reference Include="AxDSIEMVXLib.dll" Condition=" Exists('DSIEMVXLib.dll') And Exists('AxDSIEMVXLib.dll') " />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AxWrapper.cs" />
+    <Compile Include="IAxWrapper.cs" />
     <Compile Include="FakeAx.cs" />
     <Compile Include="EmvWrapper.cs" Condition=" Exists('DSIPDCXLib.dll') And Exists('AxDSIPDCXLib.dll') And Exists('DSIEMVXLib.dll') AND Exists('AxDSIEMVXLib.dll') " />
     <Compile Include="PdcxWrapper.cs" Condition=" Exists('DSIPDCXLib.dll') And Exists('AxDSIPDCXLib.dll') " />

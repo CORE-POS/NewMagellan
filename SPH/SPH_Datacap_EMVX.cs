@@ -40,8 +40,8 @@ namespace SPH
 
     public class SPH_Datacap_EMVX : SerialPortHandler
     {
-        private AxWrapper emv_ax_control = null;
-        private AxWrapper pdc_ax_control = null; // can I include both?
+        private IAxWrapper emv_ax_control = null;
+        private IAxWrapper pdc_ax_control = null; // can I include both?
         private string device_identifier = null;
         private string com_port = "0";
         protected string server_list = "x1.mercurypay.com;x2.backuppay.com";
@@ -85,7 +85,7 @@ namespace SPH
                 try
                 {
                     var type = d.GetType("AxLayer.PdcxWrapper");
-                    pdc_ax_control = (AxWrapper)Activator.CreateInstance(type);
+                    pdc_ax_control = (IAxWrapper)Activator.CreateInstance(type);
                 }
                 catch (Exception)
                 {
@@ -103,7 +103,7 @@ namespace SPH
                 try
                 {
                     var type = d.GetType("AxLayer.EmvWrapper");
-                    emv_ax_control = (AxWrapper)Activator.CreateInstance(type);
+                    emv_ax_control = (IAxWrapper)Activator.CreateInstance(type);
                 }
                 catch (Exception)
                 {
@@ -122,7 +122,7 @@ namespace SPH
             return true;
         }
 
-        public void SetControls(AxWrapper emv, AxWrapper pdc)
+        public void SetControls(IAxWrapper emv, IAxWrapper pdc)
         {
             emv_ax_control = emv;
             pdc_ax_control = pdc;

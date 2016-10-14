@@ -47,7 +47,7 @@ namespace SPH {
         protected bool SPH_Running;
         protected SerialPort sp;
         protected IPortWrapper wsp;
-        protected DelegateForm parent;
+        protected IDelegateForm parent;
         protected string port;
         protected int verbose_mode;
 
@@ -72,7 +72,7 @@ namespace SPH {
             return this.GetType().Name + ": " + this.port;
         }
         
-        public void SetParent(DelegateForm p)
+        public void SetParent(IDelegateForm p)
         {
             parent = p;
         }

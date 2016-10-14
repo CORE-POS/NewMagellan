@@ -58,9 +58,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Parallel-Posix.cs" />
-    <Compile Include="Parallel-Win32.cs" />
-    <Compile Include="ParallelWrapper.cs" />
+    <Compile Include="ParallelWrapper_Posix.cs" />
+    <Compile Include="ParallelWrapper_Win32.cs" />
+    <Compile Include="IParallelWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

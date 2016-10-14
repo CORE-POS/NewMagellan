@@ -39,7 +39,7 @@ namespace SPH {
 
 public class SPH_Datacap_PDCX : SerialPortHandler 
 {
-    private AxWrapper ax_control = null;
+    private IAxWrapper ax_control = null;
     private string device_identifier = null;
     private string com_port = "0";
     protected string server_list = "x1.mercurypay.com;x2.backuppay.com";
@@ -71,7 +71,7 @@ public class SPH_Datacap_PDCX : SerialPortHandler
             var d = new Discover.Discover();
             try {
                 var type = d.GetType("AxLayer.PdcxWrapper");
-                ax_control = (AxWrapper)Activator.CreateInstance(type);
+                ax_control = (IAxWrapper)Activator.CreateInstance(type);
             } catch (Exception) {
                 ax_control = new FakeAx();
             }
