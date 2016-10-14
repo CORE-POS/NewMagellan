@@ -19,6 +19,7 @@ namespace UDPMsgBox
         protected DelegateForm parent;
         protected int port;
         protected UdpClient u;
+        protected bool listening  = false;
 
         public UDPMsgBox(int p)
         {
@@ -36,6 +37,7 @@ namespace UDPMsgBox
 
             while (running) {
                 try {
+                    listening = true;
                     Byte[] b = u.Receive(ref e);
                     this.SendBytes(b);
                 
@@ -43,6 +45,12 @@ namespace UDPMsgBox
                     System.Console.WriteLine(ex.ToString());
                 }
             }
+            listening = false;
+        }
+
+        public bool IsListening()
+        {
+            return listening;
         }
 
         private void SendBytes(Byte[] receiveBytes)

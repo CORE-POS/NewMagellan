@@ -14,6 +14,8 @@ module UDP =
         let f = FakePort.FakeDelegate()
         u.SetParent(f)
         u.My_Thread.Start()
+        while not (u.IsListening()) do
+            System.Threading.Thread.Sleep(50)
         let client = new UdpClient()
         let msg = System.Text.Encoding.ASCII.GetBytes("test msg")
         client.Send(msg, msg.Length, "localhost", 9450) |> ignore
