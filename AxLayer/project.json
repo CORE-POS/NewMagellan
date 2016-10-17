@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "debugType": "portable"
+  },
+  "buildOptions": {
+    "compile": {
+      "includeFiles": ["IAxWrapper.cs", "FakeAx.cs"],
+      "excludeFiles": ["EmvWrapper.cs", "PdcxWrapper.cs"]
+    }
+  },
+  "dependencies": {},
+  "frameworks": {
+    "netstandard1.6": {
+      "dependencies": {
+        "NETStandard.Library": "1.6.0"
+      }
+    }
+  }
+}

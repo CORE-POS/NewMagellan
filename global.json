@@ -1,0 +1,10 @@
+{
+    "projects": [
+        "AxLayer",
+        "Bitmap",
+        "MsgInterface",
+        "ParallelLayer",
+        "UDBMsgBox",
+        "USBLayer"
+    ]
+}
