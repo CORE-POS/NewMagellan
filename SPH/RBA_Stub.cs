@@ -175,6 +175,8 @@ public class RBA_Stub : SPH_IngenicoRBA_Common
     {
         try {
             WriteMessageToDevice(GetCardType());
+            Thread.Sleep(1500);
+            addPaymentButtons();
         } catch (Exception) {
         }
     }
@@ -206,9 +208,6 @@ public class RBA_Stub : SPH_IngenicoRBA_Common
                         System.Console.WriteLine("ACK!");
                     }
                     last_message = null;
-                    if (ackCount == 0) {
-                        addPaymentButtons();
-                    }
                     ackCount++;
                 } else if (b == 0x15) {
                     // NAK
