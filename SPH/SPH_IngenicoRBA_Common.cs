@@ -338,72 +338,72 @@ public class SPH_IngenicoRBA_Common : SerialPortHandler
                 }
                 break;
 
-                case 24:
-                    // response from a form message
-                    // should normally mean "card type selected"
-                    // if the buffer is undersized or the status byte
-                    // is not ASCII zero, go back the beginning
-                    // otherwise see which type was selected
-                    if (buffer.Length < 6 || buffer[4] != 0x30) {
-                        WriteMessageToDevice(SwipeCardScreen());
-                    } else if (buffer[5] == 0x41) {
-                        PushOutput("TERM:Debit");
-                        if (auto_state_change) {
-                            WriteMessageToDevice(PinEntryScreen());
-                        }
-                    } else if (buffer[5] == 0x42) {
-                        PushOutput("TERM:Credit");
-                        if (auto_state_change) {
-                            WriteMessageToDevice(TermWaitScreen());
-                        }
-                    } else if (buffer[5] == 0x43) {
-                        PushOutput("TERM:EbtCash");
-                        if (auto_state_change) {
-                            WriteMessageToDevice(PinEntryScreen());
-                        }
-                    } else if (buffer[5] == 0x44) {
-                        PushOutput("TERM:EbtFood");
-                        if (auto_state_change) {
-                            WriteMessageToDevice(PinEntryScreen());
-                        }
+            case 24:
+                // response from a form message
+                // should normally mean "card type selected"
+                // if the buffer is undersized or the status byte
+                // is not ASCII zero, go back the beginning
+                // otherwise see which type was selected
+                if (buffer.Length < 6 || buffer[4] != 0x30) {
+                    WriteMessageToDevice(SwipeCardScreen());
+                } else if (buffer[5] == 0x41) {
+                    PushOutput("TERM:Debit");
+                    if (auto_state_change) {
+                        WriteMessageToDevice(PinEntryScreen());
                     }
-                    break;
+                } else if (buffer[5] == 0x42) {
+                    PushOutput("TERM:Credit");
+                    if (auto_state_change) {
+                        WriteMessageToDevice(TermWaitScreen());
+                    }
+                } else if (buffer[5] == 0x43) {
+                    PushOutput("TERM:EbtCash");
+                    if (auto_state_change) {
+                        WriteMessageToDevice(PinEntryScreen());
+                    }
+                } else if (buffer[5] == 0x44) {
+                    PushOutput("TERM:EbtFood");
+                    if (auto_state_change) {
+                        WriteMessageToDevice(PinEntryScreen());
+                    }
+                }
+                break;
 
-                case 29:    
-                    // get variable response from device
-                    status = buffer[4] - 0x30;
-                    int var_code = 0;
-                    for (int i=0;i<6;i++) {
-                        var_code = var_code*10 + (buffer[i+6]-0x30);
-                    }
-                    if (var_code == 712) {
-                        ParseSigLengthMessage(status,buffer);
-                    } else if (var_code >= 700 && var_code <= 709) {
-                        ParseSigBlockMessage(status,buffer);
-                    }
-                    break;
+            case 29:    
+                // get variable response from device
+                status = buffer[4] - 0x30;
+                int var_code = 0;
+                for (int i=0;i<6;i++) {
+                    var_code = var_code*10 + (buffer[i+6]-0x30);
+                }
+                if (var_code == 712) {
+                    ParseSigLengthMessage(status,buffer);
+                } else if (var_code >= 700 && var_code <= 709) {
+                    ParseSigBlockMessage(status,buffer);
+                }
+                break;
 
-                case 31:
-                    // PIN entry response
-                    if (buffer.Length < 5 || buffer[4] != 0x30) {
-                        // problem; start over
-                        WriteMessageToDevice(SwipeCardScreen());
-                    } else {
-                        string pin_msg = enc.GetString(buffer);
-                        // trim STX, command prefix, status byte, ETX, and LRC
-                        pin_msg = pin_msg.Substring(5, pin_msg.Length - 7);
-                        PushOutput("PINCACHE:" + pin_msg);
-                        if (auto_state_change) {
-                            WriteMessageToDevice(TermWaitScreen());
-                        }
+            case 31:
+                // PIN entry response
+                if (buffer.Length < 5 || buffer[4] != 0x30) {
+                    // problem; start over
+                    WriteMessageToDevice(SwipeCardScreen());
+                } else {
+                    string pin_msg = enc.GetString(buffer);
+                    // trim STX, command prefix, status byte, ETX, and LRC
+                    pin_msg = pin_msg.Substring(5, pin_msg.Length - 7);
+                    PushOutput("PINCACHE:" + pin_msg);
+                    if (auto_state_change) {
+                        WriteMessageToDevice(TermWaitScreen());
                     }
-                    break;
+                }
+                break;
 
-                case 50:    
-                    // auth request from device
-                    ParseAuthMessage(buffer);
-                    break;
-            }
+            case 50:    
+                // auth request from device
+                ParseAuthMessage(buffer);
+                break;
+        }
     }
 
     /**
@@ -446,6 +446,21 @@ public class SPH_IngenicoRBA_Common : SerialPortHandler
             WriteMessageToDevice(TermApprovedScreen());
         } else if (!auto_state_change && !getting_signature && msg == "termGetPin") {
             WriteMessageToDevice(PinEntryScreen());
+        } else if (msg == "termReConfig") {
+            WriteMessageToDevice(OfflineMessage());
+            // enable ebt cash
+            WriteMessageToDevice(WriteConfigMessage("11", "3", EBT_CA));
+            // enable ebt food
+            WriteMessageToDevice(WriteConfigMessage("11", "4", EBT_FS));
+            // mute beep volume
+            WriteMessageToDevice(WriteConfigMessage("7", "14", "5"));
+            // new style save/restore state
+            WriteMessageToDevice(WriteConfigMessage("7", "15", "1"));
+            // do not show messages between screens
+            WriteMessageToDevice(WriteConfigMessage("7", "1", "0"));
+            // send reset reply
+            WriteMessageToDevice(WriteConfigMessage("7", "9", "1"));
+            WriteMessageToDevice(OnlineMessage());
         }
 
         if (this.verbose_mode > 0) {
@@ -746,11 +761,6 @@ public class SPH_IngenicoRBA_Common : SerialPortHandler
     */
 
     // write DFS configuration values
-    /**
-      Not used in current implementation. Commented to
-      reduce compilation warnings.
-      29Dec2014
-    */
     protected byte[] WriteConfigMessage(string group_num, string index_num, string val)
     {
         System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
