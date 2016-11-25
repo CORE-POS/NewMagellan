@@ -335,6 +335,10 @@ public class SPH_IngenicoRBA_Common : SerialPortHandler
                 }
                 if (auto_state_change) {
                     WriteMessageToDevice(GetCardType());
+                    Thread.Sleep(2000);
+                    char fs = (char)0x1c;
+                    string buttons = "Bbtna,S"+fs+"Bbtnb,S"+fs+"Bbtnc,S"+fs+"Bbtnd,S";
+                    WriteMessageToDevice(UpdateScreenMessage(buttons));
                 }
                 break;
 
@@ -344,7 +348,7 @@ public class SPH_IngenicoRBA_Common : SerialPortHandler
                 // if the buffer is undersized or the status byte
                 // is not ASCII zero, go back the beginning
                 // otherwise see which type was selected
-                if (buffer.Length < 6 || buffer[4] != 0x30) {
+                if (buffer.Length < 6 || buffer[4] != 0x30 || buffer[5] == 0x1b) {
                     WriteMessageToDevice(SwipeCardScreen());
                 } else if (buffer[5] == 0x41) {
                     PushOutput("TERM:Debit");
@@ -835,7 +839,7 @@ public class SPH_IngenicoRBA_Common : SerialPortHandler
     {
         System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
         byte[] prompt = enc.GetBytes("Swipe Card");
-        byte[] msg = new byte[5 + prompt.Length];
+        byte[] msg = new byte[11 + prompt.Length];
 
         msg[0] = 0x2;
         msg[1] = 0x32;
@@ -846,7 +850,13 @@ public class SPH_IngenicoRBA_Common : SerialPortHandler
             msg[pos] = b;
             pos++;
         }
-        msg[pos] = 0x3;
+        msg[pos] = 0x1c; // FS
+        msg[pos+1] = 0x1c; // FS
+        msg[pos+2] = 0x1c; // FS
+        msg[pos+3] = 0x4d; // "M"
+        msg[pos+4] = 0x43; // "C"
+        msg[pos+5] = 0x53; // "S"
+        msg[pos+6] = 0x3;
 
         return msg;
     }
