@@ -444,6 +444,10 @@ public class SPH_IngenicoRBA_Common : SerialPortHandler
             WriteMessageToDevice(StatusRequestMessage());
         } else if (!auto_state_change && !getting_signature && (msg == "termGetType" || msg == "termGetTypeWithFS")) {
             WriteMessageToDevice(GetCardType());
+            Thread.Sleep(2000);
+            char fs = (char)0x1c;
+            string buttons = "Bbtna,S"+fs+"Bbtnb,S"+fs+"Bbtnc,S"+fs+"Bbtnd,S";
+            WriteMessageToDevice(UpdateScreenMessage(buttons));
         } else if (!auto_state_change && !getting_signature && msg == "termWait") {
             WriteMessageToDevice(TermWaitScreen());
         } else if (!auto_state_change && !getting_signature && msg == "termApproved") {
