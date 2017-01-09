@@ -68,6 +68,7 @@
   <ItemGroup>
     <Compile Include="IPortWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RBA_Embed.cs" />
     <Compile Include="RBA_Stub.cs" />
     <Compile Include="SerialPortHandler.cs" />
     <Compile Include="SPH_Datacap_EMVX.cs" />
