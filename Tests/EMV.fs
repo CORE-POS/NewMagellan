@@ -17,16 +17,16 @@ module EMV =
             System.Threading.Thread.Sleep(50)
         emv.SetControls(ax, ax)
         let client = new TcpClient("localhost", 8999)
-        let mutable content = ""
+        let content = new System.Text.StringBuilder()
         using (client.GetStream()) ( fun stream ->
             let msg = "POST HTTP/1.0\r\nContent-Length: 4\r\n\r\nasdf"
             let bytes = System.Text.Encoding.ASCII.GetBytes(msg)
             stream.Write(bytes, 0, bytes.Length)
             let mutable buffer:byte array = Array.create 1024 ((byte)0)
             stream.Read(buffer, 0, 1024) |> ignore
-            content <- System.Text.Encoding.ASCII.GetString(buffer)
+            content.Append(System.Text.Encoding.ASCII.GetString(buffer))
             ()
         )
         client.Close()
         emv.Stop()
-        content |> should haveSubstring "asdf"
+        content.ToString() |> should haveSubstring "asdf"
