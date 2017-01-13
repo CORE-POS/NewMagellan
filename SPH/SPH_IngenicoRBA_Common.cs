@@ -846,8 +846,8 @@ public class SPH_IngenicoRBA_Common : SerialPortHandler
         byte[] msg = new byte[11 + prompt.Length];
 
         msg[0] = 0x2;
-        msg[1] = 0x32;
-        msg[2] = 0x33;
+        msg[1] = 0x38;
+        msg[2] = 0x37;
         msg[3] = 0x2e;
         int pos = 4;
         foreach (byte b in prompt) {
