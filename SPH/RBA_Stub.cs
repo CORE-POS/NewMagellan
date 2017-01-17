@@ -97,6 +97,17 @@ public class RBA_Stub : SPH_IngenicoRBA_Common
         } catch (Exception) {}
     }
 
+    public void showApproved()
+    {
+        try {
+            stubStop();
+            initPort();
+            sp.Open();
+            WriteMessageToDevice(SimpleMessageScreen("Approved"));
+            sp.Close();
+        } catch (Exception) {}
+    }
+
     public void stubStop()
     {
         this.sphRunning = false;
