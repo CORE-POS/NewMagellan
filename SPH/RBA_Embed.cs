@@ -47,11 +47,13 @@ namespace SPH
 
         public void stubStart()
         {
-            initPort();
-            sp.Open();
-            this.sphRunning = true;
-            this.SPHThread = new Thread(new ThreadStart(this.Read));
-            this.SPHThread.Start();
+            try {
+                initPort();
+                sp.Open();
+                this.sphRunning = true;
+                this.SPHThread = new Thread(new ThreadStart(this.Read));
+                this.SPHThread.Start();
+            } catch (Exception) {}
         }
 
         public void stubStop()
