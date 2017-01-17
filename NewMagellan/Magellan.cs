@@ -63,7 +63,7 @@ public class Magellan : IDelegateForm
     /// <summary>
     /// UDP listening mode
     /// </summary>
-    private bool asyncUDP;
+    private bool asyncUDP = false;
 
     /// <summary>
     /// Concurrency lock for sending messages
@@ -434,7 +434,7 @@ public class Magellan : IDelegateForm
     /// </summary>
     private void UdpListen()
     {
-        this.u = new UDPMsgBox.UDPMsgBox(9450);
+        this.u = new UDPMsgBox.UDPMsgBox(9450, this.asyncUDP);
         this.u.SetParent(this);
         this.u.MyThread.Start();
     }
