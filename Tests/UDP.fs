@@ -10,7 +10,7 @@ module UDP =
 
     [<Test>]
     let ``Send a Message`` () =
-        let u = new UDPMsgBox.UDPMsgBox(9450)
+        let u = new UDPMsgBox.UDPMsgBox(9450, false)
         let f = FakePort.FakeDelegate()
         u.SetParent(f)
         u.MyThread.Start()

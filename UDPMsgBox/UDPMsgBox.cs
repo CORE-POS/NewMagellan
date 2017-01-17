@@ -47,14 +47,22 @@ namespace UDPMsgBox
         private bool listening  = false;
 
         /// <summary>
+        /// Handle received messages asynchronously
+        /// </summary>
+        private bool runAsync;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="UDPMsgBox"/> class.
         /// </summary>
         /// <param name="p">port number</param>
-        public UDPMsgBox(int p)
+        /// <param name="a">enable async</param>
+        public UDPMsgBox(int p, bool a)
         {
             this.MyThread = new Thread(new ThreadStart(this.Read));
             this.running = true;
             this.port = p;
+            this.u = new UdpClient(this.port);
+            this.runAsync = a;
         }
 
         /// <summary>
@@ -71,24 +79,44 @@ namespace UDPMsgBox
         /// </summary>
         public void Read()
         {
-            IPEndPoint e = new IPEndPoint(IPAddress.Any, 0);
-            this.u = new UdpClient(this.port);
-
-            while (this.running)
+            if (this.runAsync)
             {
-                try
-                {
-                    this.listening = true;
-                    byte[] b = this.u.Receive(ref e);
-                    this.SendBytes(b);
-                }
-                catch (Exception ex)
-                { 
-                    System.Console.WriteLine(ex.ToString());
-                }
+                Console.WriteLine("UDP is async");
+                this.ReadAsync();
+                this.listening = true;
             }
+            else
+            {
+                Console.WriteLine("UDP is synchronous");
+                IPEndPoint e = new IPEndPoint(IPAddress.Any, 0);
+                while (this.running)
+                {
+                    try
+                    {
+                        this.listening = true;
+                        byte[] b = this.u.Receive(ref e);
+                        this.SendBytes(b);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Console.WriteLine(ex.ToString());
+                    }
+                }
+                this.listening = false;
+            }
+        }
 
-            this.listening = false;
+        public void ReadAsync()
+        {
+           this.u.BeginReceive(new AsyncCallback(HandleAsync), null);
+        }
+
+        public void HandleAsync(IAsyncResult res)
+        {
+            IPEndPoint e = new IPEndPoint(IPAddress.Any, 0);
+            Byte[] b = this.u.EndReceive(res, ref e);
+            this.ReadAsync();
+            this.SendBytes(b);
         }
 
         /// <summary>

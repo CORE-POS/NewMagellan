@@ -88,11 +88,13 @@ public class RBA_Stub : SPH_IngenicoRBA_Common
 
     public void stubStart()
     {
-        initPort();
-        sp.Open();
-        this.sphRunning = true;
-        this.SPHThread = new Thread(new ThreadStart(this.Read));    
-        this.SPHThread.Start();
+        try {
+            initPort();
+            sp.Open();
+            this.sphRunning = true;
+            this.SPHThread = new Thread(new ThreadStart(this.Read));    
+            this.SPHThread.Start();
+        } catch (Exception) {}
     }
 
     public void stubStop()

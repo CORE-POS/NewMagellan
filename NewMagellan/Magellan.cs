@@ -61,6 +61,11 @@ public class Magellan : IDelegateForm
     private UDPMsgBox.UDPMsgBox u;
 
     /// <summary>
+    /// UDP listening mode
+    /// </summary>
+    private bool asyncUDP;
+
+    /// <summary>
     /// Concurrency lock for sending messages
     /// </summary>
     private object msgLock = new object();
@@ -301,9 +306,9 @@ public class Magellan : IDelegateForm
             return conf;
         }
 
+        string ini_json = File.ReadAllText(ini_file);
         try
         {
-            string ini_json = File.ReadAllText(ini_file);
             JObject o = JObject.Parse(ini_json);
 
             // filter list to valid entries
@@ -337,6 +342,11 @@ public class Magellan : IDelegateForm
             // unexpected exception
             Console.WriteLine(ex);
         }
+        try {
+            JObject o = JObject.Parse(ini_json);
+            var ua = (bool)o["asyncUDP"];
+            this.asyncUDP = ua;
+        } catch (Exception ex) {}
 
         return conf;
     }
