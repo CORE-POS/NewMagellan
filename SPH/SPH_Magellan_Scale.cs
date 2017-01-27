@@ -25,29 +25,8 @@
 
 *********************************************************************************/
 
-/*************************************************************
- * SPH_Magellan_Scale
- *     SerialPortHandler implementation for the magellan scale
- *
- * Sets up a serial connection in the constructor
- *
- * Polls for data in Read(), writing responses back to the
- * scale as needed and pushing data into the correct
- * WebBrowser frame
- *
- * Sends beep requests to the scale in PageLoaded(Uri) as
- * determined by frame #1
-*************************************************************/
-
-/* --COMMENTS - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    * 27Oct2012 Eric Lee Added Code 39 handling to ParseData()
-
-*/
-
 namespace SPH
 {
-    using System;
     using System.IO.Ports;
     using System.Threading;
 
