@@ -63,7 +63,7 @@ public class Magellan : IDelegateForm
     /// <summary>
     /// UDP listening mode
     /// </summary>
-    private bool asyncUDP = false;
+    private bool asyncUDP = true;
 
     /// <summary>
     /// Concurrency lock for sending messages
