@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO.Ports;
-using System.Threading;
-
+﻿
 namespace SPH
 {
+    using System;
+    using System.IO.Ports;
+    using System.Threading;
+
     /// <summary>
     /// Embed a raw serial port handler in a 3rd-party
     /// managed handler. Another handler, e.g. EMVX,
@@ -19,12 +16,16 @@ namespace SPH
     /// handling without changing PA-DSS or EMV
     /// certificate scope.
     /// </summary>
-    public class RBA_Embed : SPH_IngenicoRBA_RS232
+    public class RBA_Embed : SPH_IngenicoRBA_RS232, IStub
     {
+        /// <summary>
+        /// The parent constructor will open a connection
+        /// to the device. This immediately closes it again
+        /// and waits for permission to use the device.
+        /// </summary>
+        /// <param name="p">A port name</param>
         public RBA_Embed(string p) : base(p)
         {
-            // Close inherited serial port and
-            // wait for explicit initialization
             try
             {
                 sp.Close();
@@ -32,6 +33,10 @@ namespace SPH
             catch (Exception) { }
         }
 
+        /// <summary>
+        /// Create a SerialPort object with appropriate
+        /// settings
+        /// </summary>
         private void initPort()
         {
             sp = new SerialPort();
@@ -45,6 +50,10 @@ namespace SPH
             sp.ReadTimeout = 500;
         }
 
+        /// <summary>
+        /// Take control of the device. This effectively
+        /// just lets SPH_IngenicoRBA_RS232 run normally
+        /// </summary>
         public void stubStart()
         {
             try {
@@ -56,6 +65,9 @@ namespace SPH
             } catch (Exception) {}
         }
 
+        /// <summary>
+        /// Release control of the device
+        /// </summary>
         public void stubStop()
         {
             this.sphRunning = false;
@@ -65,6 +77,23 @@ namespace SPH
             }
             catch (Exception) { }
             this.SPHThread.Join();
+        }
+
+        /// <summary>
+        /// Catch any exceptions that arise from
+        /// SPH_IngeicoRBA_RS232.HandleMsg. The most
+        /// likely cause of exceptions is calling this
+        /// method when the stub is not connected to
+        /// the device
+        /// </summary>
+        /// <param name="msg"></param>
+        public override void HandleMsg(string msg)
+        {
+            try
+            {
+                base.HandleMsg(msg);
+            }
+            catch (Exception) { }
         }
     }
 }

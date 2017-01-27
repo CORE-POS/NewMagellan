@@ -20,40 +20,99 @@
 
 *********************************************************************************/
 
-using System;
-using System.IO;
-using System.Threading;
-using System.Net;
-using System.Net.Sockets;
-using System.Xml;
-using System.Drawing;
-using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
-using MsgInterface;
-using BitmapBPP;
-using AxLayer;
-using Discover;
-
 namespace SPH
 {
 
+    using System;
+    using System.IO;
+    using System.Net;
+    using System.Net.Sockets;
+    using System.Xml;
+    using System.Drawing;
+    using System.Linq;
+    using System.Collections.Generic;
+    using AxLayer;
+
     public class SPH_Datacap_EMVX : SerialPortHandler
     {
+        /// <summary>
+        /// EMV ActiveX control
+        /// </summary>
         private IAxWrapper emv_ax_control = null;
-        private IAxWrapper pdc_ax_control = null; // can I include both?
+
+        /// <summary>
+        /// Non-EMV ActiveX control for EBT and sig capture
+        /// </summary>
+        private IAxWrapper pdc_ax_control = null;
+
+        /// <summary>
+        /// The device identifier is automatically inserted into
+        /// XML messages from POS so the POS does not need to
+        /// keep track of it
+        /// </summary>
         private string device_identifier = null;
+
+        /// <summary>
+        /// The com port number is handled the same way as the
+        /// device identifier
+        /// </summary>
         private string com_port = "0";
+
+        /// <summary>
+        /// Processor server(s) with semicolon delimiter
+        /// </summary>
         protected string server_list = "x1.mercurypay.com;x2.backuppay.com";
+
+        /// <summary>
+        /// Port where serial port handler will accept HTTP messages
+        /// </summary>
         protected int LISTEN_PORT = 8999; // acting as a Datacap stand-in
+
+        /// <summary>
+        /// Timeout in seconds to wait for response from processor
+        /// </summary>
         protected short CONNECT_TIMEOUT = 60;
+
+        /// <summary>
+        /// This is used to rewrite sequence numbers in XML
+        /// requests to ensure they're actually sequential
+        /// without requiring the POS to keep track of them
+        /// </summary>
         protected string sequence_no = null;
-        private RBA_Stub rba = null;
+
+        /// <summary>
+        /// Stub for sharing RBA-compatible devices
+        /// </summary>
+        private IStub rba = null;
+
+        /// <summary>
+        /// File name of optional XML log
+        /// </summary>
         private string xml_log = null;
+
+        /// <summary>
+        /// Enable logging of sent and received XML
+        /// </summary>
         private bool enable_xml_log = false;
+
+        /// <summary>
+        /// Track whether this is actively listening for 
+        /// HTTP messages. Used to avoid timing issues
+        /// in testing
+        /// </summary>
         private bool listening = false;
+
+        /// <summary>
+        /// The HTTP listener
+        /// </summary>
         TcpListener http = null;
 
+        /// <summary>
+        /// Port is not simply "COM#" here. It should be a
+        /// device identifer followed by a colon followed by
+        /// a number indicating the COM port
+        /// </summary>
+        /// <param name="p">Device and COM IDs</param>
         public SPH_Datacap_EMVX(string p) : base(p)
         {
             device_identifier = p;
@@ -65,7 +124,7 @@ namespace SPH
             }
             if (device_identifier == "INGENICOISC250_MERCURY_E2E")
             {
-                rba = new RBA_Stub("COM" + com_port);
+                rba = new RBA_Embed("COM" + com_port);
             }
 
             string my_location = AppDomain.CurrentDomain.BaseDirectory;
@@ -73,10 +132,11 @@ namespace SPH
             xml_log = my_location + sep + "xml.log";
         }
 
-        /**
-          Initialize EMVX control with servers
-          and response timeout
-        */
+        /// <summary>
+        /// Initialize both ActiveX controls and the 
+        /// RBA stub, if applicable
+        /// </summary>
+        /// <returns>Always true</returns>
         protected bool initDevice()
         {
             if (pdc_ax_control == null)
@@ -122,21 +182,27 @@ namespace SPH
             return true;
         }
 
+        /// <summary>
+        /// Inject ActiveX controls. This is used soley
+        /// for testing.
+        /// </summary>
+        /// <param name="emv">The EMV ActiveX control</param>
+        /// <param name="pdc">The non-EMV ActiveX control</param>
         public void SetControls(IAxWrapper emv, IAxWrapper pdc)
         {
             emv_ax_control = emv;
             pdc_ax_control = pdc;
         }
 
-        /**
-          Driver listens over TCP for incoming HTTP data. Driver
-          is providing a web-service style endpoint so POS behavior
-          does not have to change. Rather than POSTing information to
-          a remote processor it POSTs information to the driver.
-
-          Driver strips off headers, feeds XML into the dsiEMVX control,
-          then sends the response back to the client.
-        */
+        /// <summary>
+        /// Driver listens over TCP for incoming HTTP data. Driver
+        /// is providing a web-service style endpoint so POS behavior
+        /// does not have to change. Rather than POSTing information to
+        /// a remote processor it POSTs information to the driver.
+        /// 
+        /// Driver strips off headers, feeds XML into the dsiEMVX control,
+        /// then sends the response back to the client.
+        /// </summary>
         public override void Read()
         {
             initDevice();
@@ -203,15 +269,19 @@ namespace SPH
             listening = false;
         }
 
+        /// <summary>
+        /// Check if HTTP listener is active
+        /// </summary>
+        /// <returns>boolean is listening</returns>
         public bool IsListening()
         {
             return listening;
         }
 
-        /**
-          Pull HTTP body out of string. Simply looking
-          for blank line between headers and body
-        */
+        /// <summary>
+        /// Pull HTTP body out of string. Simply looking
+        /// for blank line between headers and body
+        /// </summary>
         protected string GetHttpBody(string http_request)
         {
             StringReader sr = new StringReader(http_request);
@@ -233,9 +303,9 @@ namespace SPH
             return ret;
         }
 
-        /**
-          Add simple HTTP headers to content string
-        */
+        /// <summary>
+        /// Add simple HTTP headers to content string
+        /// </summary>
         protected string WrapHttpResponse(string http_response)
         {
             string headers = "HTTP/1.0 200 OK\r\n"
@@ -248,6 +318,20 @@ namespace SPH
             return headers + http_response;
         }
 
+        /// <summary>
+        /// Handle message recived from POS via the parent,
+        /// typically NewMagellan
+        /// 
+        /// Request and Reboot messages will reset both
+        /// ActiveX controls and the RBA stub, if applicable
+        ///
+        /// Signature requests are handled via the non-EMV
+        /// ActiveX control
+        ///
+        /// All other messages are passed through to the RBA
+        /// stub, if applicable or ignored otherwise
+        /// </summary>
+        /// <param name="msg"></param>
         public override void HandleMsg(string msg)
         {
             // optional predicate for "termSig" message
@@ -256,15 +340,6 @@ namespace SPH
             {
                 //sig_message = msg.Substring(7);
                 msg = "termSig";
-            }
-            if (msg.Length > 10 && msg.Substring(0, 10) == "screenLine")
-            {
-                string line = msg.Substring(10);
-                msg = "IGNORE";
-                if (rba != null)
-                {
-                    rba.addScreenMessage(line);
-                }
             }
             switch (msg)
             {
@@ -276,10 +351,6 @@ namespace SPH
                     }
                     initDevice();
                     break;
-                case "termManual":
-                    break;
-                case "termApproved":
-                    break;
                 case "termSig":
                     if (rba != null)
                     {
@@ -287,20 +358,25 @@ namespace SPH
                     }
                     GetSignature();
                     break;
+                case "termManual":
+                case "termApproved":
                 case "termGetType":
-                    break;
                 case "termGetTypeWithFS":
-                    break;
                 case "termGetPin":
-                    break;
                 case "termWait":
+                    if (rba != null)
+                    {
+                        rba.HandleMsg(msg);
+                    }
                     break;
             }
         }
 
-        /**
-          Process XML transaction using dsiPDCX
-        */
+        /// <summary>
+        /// Process a transaction using the EMV ActiveX control
+        /// </summary>
+        /// <param name="xml">XML transaction</param>
+        /// <returns>XML response</returns>
         protected string ProcessEMV(string xml)
         {
             /* 
@@ -398,9 +474,12 @@ namespace SPH
             return "";
         }
 
-        /**
-          Process XML transaction using dsiPDCX
-        */
+        /// <summary>
+        /// Process a transaction using the non-EMV ActiveX
+        /// control
+        /// </summary>
+        /// <param name="xml">XML transaction</param>
+        /// <returns>XML response</returns>
         protected string ProcessPDC(string xml)
         {
             xml = xml.Trim(new char[] { '"' });
@@ -426,17 +505,19 @@ namespace SPH
             return ret;
         }
 
-        /**
-          Get the current sequence number OR the default
-        */
+        /// <summary>
+        /// Get the current sequence number OR the default
+        /// </summary>
         protected string SequenceNo()
         {
             return sequence_no != null ? sequence_no : "0010010010";
         }
 
-        /**
-          PDCX initialize device
-        */
+        /// <summary>
+        /// Send device initialization message to the
+        /// non-EMV ActiveX control
+        /// </summary>
+        /// <returns>XML response</returns>
         protected string InitPDCX()
         {
             string xml = "<?xml version=\"1.0\"?>"
@@ -454,9 +535,10 @@ namespace SPH
             return ProcessPDC(xml);
         }
 
-        /**
-          EMVX reset device for next transaction
-        */
+        /// <summary>
+        /// Send a reset message to the EMV ActiveX control
+        /// </summary>
+        /// <returns>XML response</returns>
         protected string PadReset()
         {
             string xml = "<?xml version=\"1.0\"?>"
@@ -474,9 +556,12 @@ namespace SPH
             return ProcessEMV(xml);
         }
 
-        /**
-          PDCX method to get signature from device
-        */
+        /// <summary>
+        /// Tell the device to enter signature capture mode.
+        /// On success this will write a bitmap to the filesystem and
+        /// send a message to the POS notifying it of the image
+        /// </summary>
+        /// <returns>Always null</returns>
         protected string GetSignature()
         {
             var reset = PadReset();
@@ -525,9 +610,13 @@ namespace SPH
             return null;
         }
 
-        /**
-          Translate securedevice strings to padtype strings
-        */
+        /// <summary>
+        /// Devices actually often have two slightly different
+        /// identifiers. This maps the primary device identifier stored
+        /// in this object to a secondary pad type identifier
+        /// </summary>
+        /// <param name="device">Device identifier</param>
+        /// <returns>Pad type identifier</returns>
         protected string SecureDeviceToPadType(string device)
         {
             switch (device)
@@ -543,9 +632,13 @@ namespace SPH
             }
         }
 
-        /**
-          Translate pdc securedevice strings to emv securedevice strings
-        */
+        /// <summary>
+        /// The EMV ActiveX controller potentially adds a 3rd
+        /// device identifier. This is another mapping like
+        /// SecureDeviceToPadType
+        /// </summary>
+        /// <param name="device">Primary device identifier</param>
+        /// <returns>Tertiary device identifier</returns>
         protected string SecureDeviceToEmvType(string device)
         {
             switch (device)
@@ -561,6 +654,11 @@ namespace SPH
 
         }
 
+        /// <summary>
+        /// Determine if the device identifier is Canadian
+        /// </summary>
+        /// <param name="device">Device identifier</param>
+        /// <returns>boolean; true means Canadian</returns>
         protected bool IsCanadianDeviceType(string device)
         {
             switch (device)
@@ -574,6 +672,13 @@ namespace SPH
             }
         }
 
+        /// <summary>
+        /// Signature data comes in as a series of points 
+        /// e.g. x1,y1:x2,y2:x3,y3:...
+        /// This converts them to a list of points
+        /// </summary>
+        /// <param name="data">Signature data</param>
+        /// <returns>List of corresponding points</returns>
         protected List<Point> SigDataToPoints(string data)
         {
             char[] comma = new char[] { ',' };
@@ -587,6 +692,13 @@ namespace SPH
             return points.ToList();
         }
 
+        /// <summary>
+        /// Convert a string coordinate to an integer.
+        /// The special value "#" representing pen lifted
+        /// is translated to zero
+        /// </summary>
+        /// <param name="coord">String coordinate</param>
+        /// <returns>Integer coordinate</returns>
         protected int CoordsToInt(string coord)
         {
             if (coord == "#")
@@ -599,6 +711,9 @@ namespace SPH
             }
         }
 
+        /// <summary>
+        /// Ensure that the HTTP listener is stopped, too
+        /// </summary>
         new public void Stop()
         {
             sphRunning = false;
@@ -606,7 +721,7 @@ namespace SPH
                 http.Stop();
             }
             SPHThread.Join();
-            System.Console.WriteLine("SPH Stopped");
+            Console.WriteLine("SPH Stopped");
         }
 
 
