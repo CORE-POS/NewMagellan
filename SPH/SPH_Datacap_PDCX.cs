@@ -84,6 +84,9 @@ namespace SPH {
         /// </summary>
         private IStub rba = null;
 
+        private bool pdc_active;
+        private Object pdcLock = new Object();
+
         /// <summary>
         /// Port is not simply "COM#" here. It should be a
         /// device identifer followed by a colon followed by
@@ -98,9 +101,7 @@ namespace SPH {
                 device_identifier = parts[0];
                 com_port = parts[1];
             }
-            if (device_identifier == "INGENICOISC250_MERCURY_E2E") {
-                rba = new RBA_Stub("COM"+com_port);
-            }
+            this.pdc_active = false;
         }
 
         /// <summary>
@@ -122,10 +123,22 @@ namespace SPH {
                 ax_control.SetResponseTimeout(CONNECT_TIMEOUT);
                 InitPDCX();
             }
-            ax_control.CancelRequest();
+            lock (pdcLock) 
+            {
+                if (pdc_active)
+                {
+                    ax_control.CancelRequest();
+                }
+            }
+
+            if (rba == null) {
+                if (device_identifier == "INGENICOISC250_MERCURY_E2E") {
+                    rba = new RBA_Stub("COM"+com_port);
+                    rba.SetParent(this.parent);
+                    rba.SetVerbose(this.verbose_mode);
+                }
+            }
             if (rba != null) {
-                rba.SetParent(this.parent);
-                rba.SetVerbose(this.verbose_mode);
                 rba.stubStart();
             }
 
@@ -171,7 +184,15 @@ namespace SPH {
                                 Console.WriteLine(message);
                             }
                             ax_control.CancelRequest();
+                            lock (pdcLock) 
+                            {
+                                this.pdc_active = true;
+                            }
                             string result = ax_control.ProcessTransaction(message, 1, null, null);
+                            lock (pdcLock) 
+                            {
+                                this.pdc_active = false;
+                            }
                             result = WrapHttpResponse(result);
                             if (this.verbose_mode > 0) {
                                 Console.WriteLine(result);
@@ -329,7 +350,15 @@ namespace SPH {
                 + "</Account>"
                 + "</Transaction>"
                 + "</TStream>";
+            lock (pdcLock) 
+            {
+                this.pdc_active = true;
+            }
             string result = ax_control.ProcessTransaction(xml, 1, null, null);
+            lock (pdcLock) 
+            {
+                this.pdc_active = false;
+            }
             XmlDocument doc = new XmlDocument();
             try {
                 doc.LoadXml(result);

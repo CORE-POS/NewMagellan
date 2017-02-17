@@ -107,6 +107,9 @@ namespace SPH
         /// </summary>
         TcpListener http = null;
 
+        private bool pdc_active;
+        private Object pdcLock = new Object();
+
         /// <summary>
         /// Port is not simply "COM#" here. It should be a
         /// device identifer followed by a colon followed by
@@ -122,14 +125,11 @@ namespace SPH
                 device_identifier = parts[0];
                 com_port = parts[1];
             }
-            if (device_identifier == "INGENICOISC250_MERCURY_E2E")
-            {
-                rba = new RBA_Embed("COM" + com_port);
-            }
 
             string my_location = AppDomain.CurrentDomain.BaseDirectory;
             char sep = Path.DirectorySeparatorChar;
             xml_log = my_location + sep + "xml.log";
+            this.pdc_active = false;
         }
 
         /// <summary>
@@ -155,7 +155,13 @@ namespace SPH
                 pdc_ax_control.SetResponseTimeout(CONNECT_TIMEOUT);
                 InitPDCX();
             }
-            pdc_ax_control.CancelRequest();
+            lock (pdcLock) 
+            {
+                if (pdc_active)
+                {
+                    pdc_ax_control.CancelRequest();
+                }
+            }
 
             if (emv_ax_control == null)
             {
@@ -164,18 +170,26 @@ namespace SPH
                 {
                     var type = d.GetType("AxLayer.EmvWrapper");
                     emv_ax_control = (IAxWrapper)Activator.CreateInstance(type);
+                    PadReset();
                 }
                 catch (Exception)
                 {
                     emv_ax_control = new FakeAx();
                 }
             }
-            PadReset();
+
+            if (rba == null)
+            {
+                if (device_identifier == "INGENICOISC250_MERCURY_E2E")
+                {
+                    rba = new RBA_Embed("COM" + com_port);
+                    rba.SetParent(this.parent);
+                    rba.SetVerbose(this.verbose_mode);
+                }
+            }
 
             if (rba != null)
             {
-                rba.SetParent(this.parent);
-                rba.SetVerbose(this.verbose_mode);
                 rba.stubStart();
             }
 
@@ -239,8 +253,7 @@ namespace SPH
                             string result = "";
                             if (message.Contains("EMV"))
                             {
-                                PadReset();
-                                result = ProcessEMV(message);
+                                result = ProcessEMV(message, true);
                             }
                             else if (message != "")
                             {
@@ -377,7 +390,7 @@ namespace SPH
         /// </summary>
         /// <param name="xml">XML transaction</param>
         /// <returns>XML response</returns>
-        protected string ProcessEMV(string xml)
+        protected string ProcessEMV(string xml, bool autoReset)
         {
             /* 
                Substitute values into the XML request
@@ -419,6 +432,10 @@ namespace SPH
                 {
                     // try request with an IP
                     request.SelectSingleNode("TStream/Transaction/HostOrIP").InnerXml = IP;
+                    if (autoReset)
+                    {
+                        PadReset();
+                    }
                     result = emv_ax_control.ProcessTransaction(request.OuterXml);
                     if (enable_xml_log)
                     {
@@ -492,7 +509,15 @@ namespace SPH
             }
 
             string ret = "";
+            lock (pdcLock) 
+            {
+                this.pdc_active = true;
+            }
             ret = pdc_ax_control.ProcessTransaction(xml, 1, null, null);
+            lock (pdcLock) 
+            {
+                this.pdc_active = false;
+            }
             if (enable_xml_log)
             {
                 using (StreamWriter sw = new StreamWriter(xml_log, true))
@@ -553,7 +578,7 @@ namespace SPH
                 + "</Transaction>"
                 + "</TStream>";
 
-            return ProcessEMV(xml);
+            return ProcessEMV(xml, false);
         }
 
         /// <summary>
@@ -564,8 +589,6 @@ namespace SPH
         /// <returns>Always null</returns>
         protected string GetSignature()
         {
-            var reset = PadReset();
-
             string xml = "<?xml version=\"1.0\"?>"
                 + "<TStream>"
                 + "<Transaction>"
