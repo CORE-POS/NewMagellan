@@ -66,6 +66,17 @@ public class Magellan : IDelegateForm
     private bool asyncUDP = true;
 
     /// <summary>
+    /// Disable RBA device control entirely
+    /// </summary>
+    private bool disableRBA = false;
+
+    /// <summary>
+    /// Disable RBA interactive buttons
+    /// but not on-screen messaging
+    /// </summary>
+    private bool disableButtons = false;
+
+    /// <summary>
     /// Concurrency lock for sending messages
     /// </summary>
     private object msgLock = new object();
@@ -204,7 +215,7 @@ public class Magellan : IDelegateForm
         {
             this.ShutDown();
         }
-        else if (msg == "fullUdp")
+        else if (msg == "full_udp")
         {
             this.fullUdp = true;
         }
@@ -347,6 +358,16 @@ public class Magellan : IDelegateForm
             var ua = (bool)o["asyncUDP"];
             this.asyncUDP = ua;
         } catch (Exception ex) {}
+        try {
+            JObject o = JObject.Parse(ini_json);
+            var drb = (bool)o["disableRBA"];
+            this.disableRBA = drb;
+        } catch (Exception) {}
+        try {
+            JObject o = JObject.Parse(ini_json);
+            var dbt = (bool)o["disableButtons"];
+            this.disableButtons = dbt;
+        } catch (Exception) {}
 
         return conf;
     }
