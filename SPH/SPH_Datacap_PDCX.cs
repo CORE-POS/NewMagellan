@@ -104,6 +104,20 @@ namespace SPH {
             this.pdc_active = false;
         }
 
+        public override void SetConfig(string k, string v)
+        {
+            if (k == "disableRBA" && v == "true") {
+                try {
+                    if (this.rba != null) {
+                        rba.stubStop();
+                    }
+                } catch (Exception) {}
+                this.rba = null;
+            } else if (k == "disableButtons" && v == "true") {
+                this.rba.SetEMV(RbaButtons.None);
+            }
+        }
+
         /// <summary>
         /// Initialize the ActiveX control and
         /// RBA stub, if applicable
@@ -282,7 +296,6 @@ namespace SPH {
                     if (rba != null) {
                         rba.stubStop();
                     }
-                    ax_control.CancelRequest();
                     initDevice();
                     break;
                 case "termManual":

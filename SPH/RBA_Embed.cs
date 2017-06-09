@@ -33,6 +33,10 @@ namespace SPH
             catch (Exception) { }
         }
 
+        public void SetEMV(RbaButtons emv)
+        {
+        }
+
         /// <summary>
         /// Create a SerialPort object with appropriate
         /// settings

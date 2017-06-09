@@ -109,6 +109,8 @@ namespace SPH
 
         private bool pdc_active;
         private Object pdcLock = new Object();
+        private bool emv_reset;
+        private Object emvLock = new Object();
 
         /// <summary>
         /// Port is not simply "COM#" here. It should be a
@@ -130,6 +132,7 @@ namespace SPH
             char sep = Path.DirectorySeparatorChar;
             xml_log = my_location + sep + "xml.log";
             this.pdc_active = false;
+            this.emv_reset = true;
         }
 
         /// <summary>
@@ -177,6 +180,7 @@ namespace SPH
                     emv_ax_control = new FakeAx();
                 }
             }
+            FlaggedReset();
 
             if (rba == null)
             {
@@ -185,12 +189,15 @@ namespace SPH
                     rba = new RBA_Embed("COM" + com_port);
                     rba.SetParent(this.parent);
                     rba.SetVerbose(this.verbose_mode);
+                    rba.SetEMV(RbaButtons.EMV);
                 }
             }
 
             if (rba != null)
             {
-                rba.stubStart();
+                try {
+                    rba.stubStart();
+                } catch (Exception) {}
             }
 
             return true;
@@ -369,6 +376,7 @@ namespace SPH
                     {
                         rba.stubStop();
                     }
+                    FlaggedReset();
                     GetSignature();
                     break;
                 case "termManual":
@@ -431,12 +439,24 @@ namespace SPH
                 foreach (string IP in IPs)
                 {
                     // try request with an IP
-                    request.SelectSingleNode("TStream/Transaction/HostOrIP").InnerXml = IP;
-                    if (autoReset)
-                    {
-                        PadReset();
+
+                    // If this is NOT a pad reset request, check the emv_reset
+                    // flag to see if a reset is needed. If so, execute one
+                    // and update the flag
+                    if (autoReset) {
+                        FlaggedReset();
                     }
+
+                    request.SelectSingleNode("TStream/Transaction/HostOrIP").InnerXml = IP;
                     result = emv_ax_control.ProcessTransaction(request.OuterXml);
+
+                    // if this is not a reset command, set the reset needed flag
+                    if (autoReset) {
+                        lock(emvLock) {
+                            emv_reset = true;
+                        }
+                    }
+
                     if (enable_xml_log)
                     {
                         using (StreamWriter sw = new StreamWriter(xml_log, true))
@@ -558,6 +578,24 @@ namespace SPH
                 + "</TStream>";
 
             return ProcessPDC(xml);
+        }
+
+        /// <summary>
+        /// set a lock, check if the reset flag is active.
+        /// if so, issue a reset and clear the flag then
+        /// release the lock
+        /// </summary>
+        protected string FlaggedReset()
+        {
+            string ret = "";
+            lock(emvLock) {
+                if (emv_reset) {
+                    ret  = PadReset();
+                    emv_reset = false;
+                }
+            }
+
+            return ret;
         }
 
         /// <summary>

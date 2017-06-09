@@ -123,6 +123,8 @@ namespace SPH
         {
             return this.GetType().Name + ": " + this.port;
         }
+
+        public virtual void SetConfig(string k, string v) {}
         
         /// <summary>
         /// Setter for parent

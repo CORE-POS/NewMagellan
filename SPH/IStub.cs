@@ -4,6 +4,11 @@ namespace SPH
     using MsgInterface;
 
     /// <summary>
+    /// Display no buttons, credit/debit buttons, or EMV buttons
+    /// </summary>
+    public enum RbaButtons { None, Credit, EMV };
+
+    /// <summary>
     /// A stub is a SerialPortHandler that can be embedded within a 
     /// second SerialPortHandler. The primary SPH may hand control of
     /// the device to the stub by calling stubStart() and may take
@@ -39,5 +44,7 @@ namespace SPH
         /// </summary>
         /// <param name="msg"></param>
         void HandleMsg(string msg);
+
+        void SetEMV(RbaButtons emv);
     }
 }

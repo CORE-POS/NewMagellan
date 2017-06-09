@@ -53,6 +53,13 @@ namespace SPH
     {
         new private SerialPort sp = null;
 
+        private RbaButtons emv_buttons = RbaButtons.Credit;
+
+        /// <summary>
+        /// Used to signal drawing thread it's time to exit
+        /// </summary>
+        private AutoResetEvent sleeper;
+
         /// <summary>
         /// Can safely skip the parent constructor in this case
         /// </summary>
@@ -60,6 +67,15 @@ namespace SPH
         public RBA_Stub(string p)
         {
             this.port = p;
+            this.sleeper = new AutoResetEvent(false);
+        }
+
+        /// <summary>
+        /// Setting for button enum
+        /// </summary>
+        public void SetEMV(RbaButtons emv)
+        {
+            this.emv_buttons = emv;
         }
 
         /// <summary>
@@ -87,8 +103,23 @@ namespace SPH
                 initPort();
                 sp.Open();
                 this.sphRunning = true;
+                this.sleeper.Reset();
                 this.SPHThread = new Thread(new ThreadStart(this.Read));    
                 this.SPHThread.Start();
+            } catch (Exception) {}
+        }
+
+        /// <summary>
+        /// Write "approved" message to screen
+        /// </summary>
+        public void showApproved()
+        {
+            try {
+                stubStop();
+                initPort();
+                sp.Open();
+                WriteMessageToDevice(SimpleMessageScreen("Approved"));
+                sp.Close();
             } catch (Exception) {}
         }
 
@@ -99,6 +130,7 @@ namespace SPH
         {
             this.sphRunning = false;
             try {
+                this.sleeper.Set();
                 sp.Close();
             } catch (Exception) { }
             this.SPHThread.Join();
@@ -185,8 +217,9 @@ namespace SPH
         {
             try {
                 WriteMessageToDevice(GetCardType());
-                Thread.Sleep(1500);
-                addPaymentButtons();
+                if (this.sleeper.WaitOne(2000) == false) {
+                    addPaymentButtons();
+                }
             } catch (Exception) {
             }
         }
@@ -203,9 +236,17 @@ namespace SPH
                 //string buttons = "Bbtna,S"+fs+"Bbtnb,S"+fs+"Bbtnc,S"+fs+"Bbtnd,S";
 
                 // CHIP+PIN button in place of credit & debit
-                string buttons = "Bbtnb,CHIP+PIN"+fs+"Bbtnb,S"+fs+"Bbtnc,S"+fs+"Bbtnd,S";
+                string buttons = "Bbtna,S"+fs+"Bbtnb,S"+fs+"Bbtnc,S"+fs+"Bbtnd,S";
+                if (this.emv_buttons == RbaButtons.EMV) {
+                    // CHIP+PIN button in place of credit & debit
+                    buttons = "Bbtnb,CHIP+PIN"+fs+"Bbtnb,S"+fs+"Bbtnc,S"+fs+"Bbtnd,S";
+                } else if (this.emv_buttons == RbaButtons.None) {
+                    buttons = "";
+                }
 
-                WriteMessageToDevice(UpdateScreenMessage(buttons));
+                if (buttons.Length > 0) {
+                    WriteMessageToDevice(UpdateScreenMessage(buttons));
+                }
             } catch (Exception) {
             }
         }
@@ -219,7 +260,6 @@ namespace SPH
         {
             showPaymentScreen();
             System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
-            int ackCount = 0;
 
             ArrayList bytes = new ArrayList();
             while (sphRunning) {
@@ -230,8 +270,6 @@ namespace SPH
                         if (this.verbose_mode > 0) {
                             Console.WriteLine("ACK!");
                         }
-                        last_message = null;
-                        ackCount++;
                     } else if (b == 0x15) {
                         // NAK
                         // Do not re-send
@@ -239,7 +277,6 @@ namespace SPH
                         if (this.verbose_mode > 0) {
                             Console.WriteLine("NAK!");
                         }
-                        last_message = null;
                     } else {
                         // part of a message
                         // force to be byte-sized
@@ -332,13 +369,7 @@ namespace SPH
                 return;
             }
 
-            try {
-                stubStop();
-                initPort();
-                sp.Open();
-                WriteMessageToDevice(SimpleMessageScreen("Approved"));
-                sp.Close();
-            } catch (Exception) {}
+            showApproved();
         }
     }
 
